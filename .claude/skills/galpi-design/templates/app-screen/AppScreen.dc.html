@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="갈피 앱 화면" description="390×844 phone screen scaffold: header, ivory content area, bottom tab bar" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F5F1E8;font-family:var(--font-ui);padding:32px">
+<div style="width:390px;height:844px;position:relative;border-radius:44px;background:#FBF9F4;box-shadow:0 24px 60px rgba(46,42,38,.18),0 0 0 10px #2E2A26;overflow:hidden;display:flex;flex-direction:column">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#2E2A26"><span>9:41</span><span style="opacity:.5">●●●</span></div>
+<div style="padding:8px 20px 4px"><h1 style="margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em;color:#2E2A26">내 책장</h1></div>
+<div style="flex:1;overflow-y:auto;padding:12px 20px 32px;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="DesignSystem_2c5b3b.QuoteCard" character="싱클레어" text="새는 알에서 나오려고 투쟁한다. 알은 세계다." hint-size="100%,140px"></x-import>
+<x-import component-from-global-scope="DesignSystem_2c5b3b.QuoteCard" character="데미안" text="내 안에서 솟아나는 것, 그것을 살아보려 했다." hint-size="100%,140px"></x-import>
+</div>
+<x-import component-from-global-scope="DesignSystem_2c5b3b.TabBar" active="shelf" hint-size="100%,56px"></x-import>
+<div style="height:22px;background:#FFFFFF"></div>
+</div>
+</div>
+
+</x-dc>
+</body>
+</html>

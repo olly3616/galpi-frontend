@@ -1,0 +1,14 @@
+:root{
+  --radius-cover:8px;
+  --radius-badge:999px;
+  --radius-control:12px;
+  --radius-card:16px;
+  --radius-sheet:20px;
+
+  /* Paper lifted a hair off the desk — never a heavy drop */
+  --shadow-none:none;
+  --shadow-1:0 1px 2px rgba(46,42,38,.05);
+  --shadow-2:0 2px 6px rgba(46,42,38,.06);
+  --shadow-3:0 6px 16px rgba(46,42,38,.08);
+  --shadow-focus:0 0 0 3px rgba(139,94,60,.16);
+}

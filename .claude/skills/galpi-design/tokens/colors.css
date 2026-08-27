@@ -1,0 +1,62 @@
+:root{
+  /* Paper — warm neutrals */
+  --paper-50:#FFFFFF;
+  --paper-100:#FBF9F4;
+  --paper-200:#F5F1E8;
+  --paper-300:#EAE4DA;
+  --paper-400:#D8D0C3;
+
+  /* Ink — text greys */
+  --ink-900:#2E2A26;
+  --ink-600:#5C544C;
+  --ink-400:#8A817A;
+  --ink-300:#A9A19A;
+
+  /* Brand */
+  --brown-700:#6E4930;
+  --brown-600:#8B5E3C;
+  --brown-300:#C7A98F;
+  --brown-100:#F1E7DE;
+
+  --gold-600:#A8851F;
+  --gold-500:#C9A227;
+  --gold-100:#F7EFD6;
+
+  /* Semantic hues */
+  --red-600:#C0492F;
+  --red-100:#F8E6E1;
+  --green-600:#5B7A5B;
+  --green-100:#E7EEE7;
+
+  /* Semantic aliases */
+  --bg-page:var(--paper-100);
+  --bg-page-alt:var(--paper-200);
+  --surface-card:var(--paper-50);
+  --surface-sunken:var(--paper-200);
+  --surface-skeleton:var(--paper-300);
+
+  --text-primary:var(--ink-900);
+  --text-secondary:var(--ink-400);
+  --text-muted:var(--ink-300);
+  --text-on-primary:#FFFFFF;
+  --text-link:var(--brown-600);
+
+  --primary:var(--brown-600);
+  --primary-hover:var(--brown-700);
+  --primary-soft:var(--brown-100);
+  --accent:var(--gold-500);
+  --accent-strong:var(--gold-600);
+  --accent-soft:var(--gold-100);
+
+  --border:var(--paper-300);
+  --border-strong:var(--paper-400);
+  --border-focus:var(--brown-600);
+
+  --error:var(--red-600);
+  --error-soft:var(--red-100);
+  --success:var(--green-600);
+  --success-soft:var(--green-100);
+
+  --disabled-bg:var(--paper-300);
+  --disabled-text:var(--ink-300);
+}

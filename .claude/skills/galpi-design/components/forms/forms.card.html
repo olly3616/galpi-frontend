@@ -1,0 +1,30 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Forms" subtitle="Input, textarea, error, switch, radio, weekdays" -->
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../guidelines/card.css"></head>
+<body><div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Input, Switch, RadioGroup, WeekdayPicker } = window.DesignSystem_2c5b3b;
+function Demo(){
+  const [days,setDays]=React.useState(["월","수","금"]);
+  const [scope,setScope]=React.useState("private");
+  const [on,setOn]=React.useState(true);
+  return (
+  <div className="grid2">
+    <div className="col">
+      <Input label="이메일" placeholder="galpi@example.com"/>
+      <Input iconLeft="search" placeholder="책 제목이나 작가를 검색해보세요"/>
+      <Input label="비밀번호" type="password" defaultValue="1234" error="8자 이상 입력해주세요"/>
+      <Input as="textarea" label="메모" rows={2} placeholder="이 대사가 왜 좋았나요?"/>
+    </div>
+    <div className="col">
+      <RadioGroup label="공개 범위" value={scope} onChange={setScope}
+        options={[{id:"private",label:"나만 보기",description:"기본값이에요"},{id:"followers",label:"팔로워에게 공개"}]}/>
+      <div><span className="lbl">요일 반복</span><WeekdayPicker value={days} onChange={setDays} style={{marginTop:8}}/></div>
+      <Switch label="알림 켜기" description="설정한 시간에 이 대사를 보내드려요" checked={on} onChange={setOn}/>
+    </div>
+  </div>);}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo/>);
+</script></body></html>

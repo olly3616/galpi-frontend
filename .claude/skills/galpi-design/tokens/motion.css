@@ -1,0 +1,11 @@
+:root{
+  --ease-standard:cubic-bezier(.32,.72,0,1); /* @kind other */
+  --ease-out:cubic-bezier(.16,1,.3,1); /* @kind other */
+  --duration-fast:120ms; /* @kind other */
+  --duration-base:200ms; /* @kind other */
+  --duration-slow:320ms; /* @kind other */
+  --transition-control:background-color var(--duration-fast) var(--ease-standard),border-color var(--duration-fast) var(--ease-standard),opacity var(--duration-fast) linear,transform var(--duration-fast) var(--ease-standard);
+}
+@keyframes galpi-shimmer{0%{opacity:.55}50%{opacity:.95}100%{opacity:.55}}
+@keyframes galpi-spin{to{transform:rotate(360deg)}}
+@keyframes galpi-fade-up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}

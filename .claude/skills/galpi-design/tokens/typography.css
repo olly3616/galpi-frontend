@@ -1,0 +1,34 @@
+:root{
+  /* Sizes */
+  --text-title:26px;      /* 화면 타이틀 24~28 */
+  --text-section:19px;    /* 섹션 헤더 18~20 */
+  --text-quote:20px;      /* 대사 본문 18~22 */
+  --text-quote-lg:22px;
+  --text-body:16px;       /* 일반 본문 15~16 */
+  --text-body-sm:15px;
+  --text-meta:13px;       /* 보조 텍스트 13~14 */
+  --text-meta-lg:14px;
+  --text-button:16px;
+
+  /* Weights */
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+  --weight-bold:700;
+
+  /* Line heights */
+  --leading-tight:1.3;
+  --leading-normal:1.45;
+  --leading-quote:1.6;
+
+  /* Letter spacing — Korean type stays near 0; only titles tighten slightly */
+  --tracking-title:-0.01em;
+  --tracking-normal:0;
+}
+
+/* Ready-made text roles */
+.galpi-title{font-family:var(--font-ui);font-size:var(--text-title);font-weight:var(--weight-bold);line-height:var(--leading-tight);letter-spacing:var(--tracking-title);color:var(--text-primary)}
+.galpi-section{font-family:var(--font-ui);font-size:var(--text-section);font-weight:var(--weight-semibold);line-height:var(--leading-tight);color:var(--text-primary)}
+.galpi-quote{font-family:var(--font-quote);font-size:var(--text-quote);font-weight:var(--weight-regular);line-height:var(--leading-quote);color:var(--text-primary)}
+.galpi-body{font-family:var(--font-ui);font-size:var(--text-body);font-weight:var(--weight-regular);line-height:var(--leading-normal);color:var(--text-primary)}
+.galpi-meta{font-family:var(--font-ui);font-size:var(--text-meta);font-weight:var(--weight-regular);line-height:var(--leading-normal);color:var(--text-secondary)}
