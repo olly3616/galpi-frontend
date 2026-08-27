@@ -11,6 +11,8 @@ export type ButtonProps = Omit<PressableProps, 'style' | 'children'> & {
   size?: Size;
   fullWidth?: boolean;
   loading?: boolean;
+  /** Optional leading icon element (e.g. a lucide icon), rendered before the label. */
+  iconLeft?: React.ReactNode;
 };
 
 const c = Colors.light;
@@ -25,6 +27,7 @@ export function Button({
   fullWidth = false,
   loading = false,
   disabled = false,
+  iconLeft,
   ...rest
 }: ButtonProps) {
   const isDisabled = disabled || loading;
@@ -54,6 +57,7 @@ export function Button({
         />
       ) : (
         <View style={styles.labelRow}>
+          {iconLeft}
           <Text
             style={[
               styles.label,
