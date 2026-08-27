@@ -1,8 +1,8 @@
 import {
   NanumMyeongjo_400Regular,
   NanumMyeongjo_700Bold,
-  useFonts,
 } from '@expo-google-fonts/nanum-myeongjo';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -17,6 +17,11 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     NanumMyeongjo_400Regular,
     NanumMyeongjo_700Bold,
+    // Pretendard (UI sans) — one family per weight; names match PretendardFonts in theme.ts.
+    'Pretendard-Regular': require('@/assets/fonts/Pretendard-Regular.otf'),
+    'Pretendard-Medium': require('@/assets/fonts/Pretendard-Medium.otf'),
+    'Pretendard-SemiBold': require('@/assets/fonts/Pretendard-SemiBold.otf'),
+    'Pretendard-Bold': require('@/assets/fonts/Pretendard-Bold.otf'),
   });
 
   useEffect(() => {

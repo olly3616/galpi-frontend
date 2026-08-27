@@ -42,3 +42,6 @@ example
 # generated native folders
 /ios
 /android
+
+# source asset archives (fonts/design-system zips are extracted into the repo, not committed)
+*.zip

@@ -89,22 +89,6 @@ export const Fonts = Platform.select({
   },
 });
 
-/**
- * Brand type families.
- * - Serif (quotes, wordmark, empty-state invitations): Nanum Myeongjo, loaded via
- *   @expo-google-fonts/nanum-myeongjo in the root layout. RN needs a distinct family per
- *   weight, so `quote` (400) and `quoteBold` (700) are separate names.
- * - UI sans: the design system specifies Pretendard, but it isn't on the Google Fonts
- *   registry, so UI text uses the platform's default sans (`undefined` fontFamily → system
- *   font, which renders Korean well) with weight controlled via fontWeight. Swap in a bundled
- *   Pretendard here later without touching call sites.
- */
-export const BrandFonts = {
-  ui: undefined as string | undefined,
-  quote: 'NanumMyeongjo_400Regular',
-  quoteBold: 'NanumMyeongjo_700Bold',
-} as const;
-
 export const FontWeights = {
   regular: '400',
   medium: '500',
@@ -112,17 +96,51 @@ export const FontWeights = {
   bold: '700',
 } as const;
 
+/**
+ * Pretendard (UI sans) family name per weight. React Native doesn't synthesize weight from a
+ * single-weight custom font, so each weight is a separately-loaded, separately-named family.
+ * These names must match the keys registered with useFonts in the root layout.
+ */
+export const PretendardFonts = {
+  [FontWeights.regular]: 'Pretendard-Regular',
+  [FontWeights.medium]: 'Pretendard-Medium',
+  [FontWeights.semibold]: 'Pretendard-SemiBold',
+  [FontWeights.bold]: 'Pretendard-Bold',
+} as const;
+
+/** Resolve the Pretendard family for a weight — use this when a style overrides fontWeight. */
+export function sansFamily(weight: keyof typeof PretendardFonts = FontWeights.regular) {
+  return PretendardFonts[weight];
+}
+
+/**
+ * Brand type families.
+ * - Serif (quotes, wordmark, empty-state invitations): Nanum Myeongjo, loaded via
+ *   @expo-google-fonts/nanum-myeongjo in the root layout.
+ * - UI sans: Pretendard, bundled from assets/fonts and loaded in the root layout. Because RN
+ *   needs one family per weight, reference `PretendardFonts[weight]` / `sansFamily(weight)`
+ *   rather than combining a single family with fontWeight.
+ */
+export const BrandFonts = {
+  ui: PretendardFonts[FontWeights.regular],
+  uiMedium: PretendardFonts[FontWeights.medium],
+  uiSemibold: PretendardFonts[FontWeights.semibold],
+  uiBold: PretendardFonts[FontWeights.bold],
+  quote: 'NanumMyeongjo_400Regular',
+  quoteBold: 'NanumMyeongjo_700Bold',
+} as const;
+
 /** Text role presets — mirrors the .galpi-* classes in tokens/typography.css. Pair with a Colors.* value for color. */
 export const Typography = {
-  title: { fontFamily: BrandFonts.ui, fontSize: 26, fontWeight: FontWeights.bold, lineHeight: 34, letterSpacing: -0.26 },
-  section: { fontFamily: BrandFonts.ui, fontSize: 19, fontWeight: FontWeights.semibold, lineHeight: 25, letterSpacing: 0 },
+  title: { fontFamily: BrandFonts.uiBold, fontSize: 26, fontWeight: FontWeights.bold, lineHeight: 34, letterSpacing: -0.26 },
+  section: { fontFamily: BrandFonts.uiSemibold, fontSize: 19, fontWeight: FontWeights.semibold, lineHeight: 25, letterSpacing: 0 },
   quote: { fontFamily: BrandFonts.quote, fontSize: 20, fontWeight: FontWeights.regular, lineHeight: 32, letterSpacing: 0 },
   quoteLg: { fontFamily: BrandFonts.quote, fontSize: 22, fontWeight: FontWeights.regular, lineHeight: 35, letterSpacing: 0 },
   body: { fontFamily: BrandFonts.ui, fontSize: 16, fontWeight: FontWeights.regular, lineHeight: 23, letterSpacing: 0 },
   bodySm: { fontFamily: BrandFonts.ui, fontSize: 15, fontWeight: FontWeights.regular, lineHeight: 22, letterSpacing: 0 },
   meta: { fontFamily: BrandFonts.ui, fontSize: 13, fontWeight: FontWeights.regular, lineHeight: 19, letterSpacing: 0 },
   metaLg: { fontFamily: BrandFonts.ui, fontSize: 14, fontWeight: FontWeights.regular, lineHeight: 20, letterSpacing: 0 },
-  button: { fontFamily: BrandFonts.ui, fontSize: 16, fontWeight: FontWeights.semibold, lineHeight: 20, letterSpacing: 0 },
+  button: { fontFamily: BrandFonts.uiSemibold, fontSize: 16, fontWeight: FontWeights.semibold, lineHeight: 20, letterSpacing: 0 },
 } as const;
 
 export const Spacing = {

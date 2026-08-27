@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
 
-import { Colors, Layout, Radius, Shadows, Typography } from '@/constants/theme';
+import { BrandFonts, Colors, Layout, Radius, Shadows, Typography } from '@/constants/theme';
 
 export type InputProps = TextInputProps & {
   label?: string;
@@ -53,6 +53,7 @@ export function Input({ label, hint, error, trailing, style, ...rest }: InputPro
 const styles = StyleSheet.create({
   label: {
     ...Typography.metaLg,
+    fontFamily: BrandFonts.uiMedium,
     fontWeight: '500',
     color: c.textPrimary,
     marginBottom: 8,

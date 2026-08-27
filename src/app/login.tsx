@@ -133,5 +133,5 @@ const styles = StyleSheet.create({
   tagline: { fontFamily: BrandFonts.quote, marginTop: Spacing.one, textAlign: 'center' },
   fields: { gap: Spacing.three },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  footerLink: { fontWeight: '600' },
+  footerLink: { fontFamily: BrandFonts.uiSemibold, fontWeight: '600' },
 });
