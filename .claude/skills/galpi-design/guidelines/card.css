@@ -1,0 +1,7 @@
+html,body{margin:0;background:var(--bg-page);font-family:var(--font-ui);color:var(--text-primary);-webkit-font-smoothing:antialiased}
+#root{padding:20px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:12px}
+.lbl{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}

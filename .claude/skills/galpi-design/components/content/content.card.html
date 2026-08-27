@@ -1,0 +1,22 @@
+<!-- @dsCard group="Components" viewport="700x420" name="Content" subtitle="Bookshelf, book cards, book row, quote cards" -->
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../guidelines/card.css"></head>
+<body><div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { BookCard, BookRow, QuoteCard, Bookshelf } = window.DesignSystem_2c5b3b;
+const shelf=[{id:"a",title:"데미안",author:"헤르만 헤세",quoteCount:3,tint:"var(--brown-100)"},{id:"b",title:"어린 왕자",author:"생텍쥐페리",quoteCount:5,tint:"var(--gold-100)"},{id:"c",title:"노인과 바다",author:"헤밍웨이",quoteCount:1,tint:"var(--paper-200)"}];
+function Demo(){return (
+  <div style={{display:"grid",gridTemplateColumns:"260px 1fr",gap:24,alignItems:"start"}}>
+    <Bookshelf books={shelf} perRow={3} onSelect={()=>{}}/>
+    <div className="col">
+      <BookRow title="위대한 개츠비" author="F. 스콧 피츠제럴드" onAdd={()=>{}}/>
+      <BookRow title="전지적 독자 시점" author="싱숑" added/>
+      <QuoteCard character="싱클레어" text="새는 알에서 나오려고 투쟁한다. 알은 세계다." hasAlarm hasNote/>
+      <QuoteCard by="도서관고양이" text="우리는 서로를 잊지 않기로 했다." source="데미안" author="헤르만 헤세" likes={12}/>
+    </div>
+  </div>);}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo/>);
+</script></body></html>

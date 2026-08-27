@@ -1,0 +1,12 @@
+/* Webfonts. No binaries were provided with the brief — both families load from CDN.
+   Pretendard (UI sans, Korean + Latin) and Nanum Myeongjo (serif, for 대사/quotes). */
+@import url("https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap");
+
+@font-face{font-family:"Pretendard Variable";font-weight:45 920;font-style:normal;font-display:swap;src:url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations")}
+
+:root{
+  --font-sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-serif:"Nanum Myeongjo","Nanum Myeongjo OTF",'RIDIBatang',ui-serif,Georgia,serif;
+  --font-quote:var(--font-serif);
+  --font-ui:var(--font-sans);
+}
