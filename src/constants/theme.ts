@@ -90,13 +90,19 @@ export const Fonts = Platform.select({
 });
 
 /**
- * Brand type families from the design system. Falls back to the system font until the
- * actual font files are bundled and loaded via expo-font (no font binaries shipped in the
- * design export — it only linked Google Fonts / a CDN woff2 for web).
+ * Brand type families.
+ * - Serif (quotes, wordmark, empty-state invitations): Nanum Myeongjo, loaded via
+ *   @expo-google-fonts/nanum-myeongjo in the root layout. RN needs a distinct family per
+ *   weight, so `quote` (400) and `quoteBold` (700) are separate names.
+ * - UI sans: the design system specifies Pretendard, but it isn't on the Google Fonts
+ *   registry, so UI text uses the platform's default sans (`undefined` fontFamily → system
+ *   font, which renders Korean well) with weight controlled via fontWeight. Swap in a bundled
+ *   Pretendard here later without touching call sites.
  */
 export const BrandFonts = {
-  ui: 'Pretendard Variable',
-  quote: 'Nanum Myeongjo',
+  ui: undefined as string | undefined,
+  quote: 'NanumMyeongjo_400Regular',
+  quoteBold: 'NanumMyeongjo_700Bold',
 } as const;
 
 export const FontWeights = {
@@ -116,7 +122,7 @@ export const Typography = {
   bodySm: { fontFamily: BrandFonts.ui, fontSize: 15, fontWeight: FontWeights.regular, lineHeight: 22, letterSpacing: 0 },
   meta: { fontFamily: BrandFonts.ui, fontSize: 13, fontWeight: FontWeights.regular, lineHeight: 19, letterSpacing: 0 },
   metaLg: { fontFamily: BrandFonts.ui, fontSize: 14, fontWeight: FontWeights.regular, lineHeight: 20, letterSpacing: 0 },
-  button: { fontFamily: BrandFonts.ui, fontSize: 16, fontWeight: FontWeights.semibold, letterSpacing: 0 },
+  button: { fontFamily: BrandFonts.ui, fontSize: 16, fontWeight: FontWeights.semibold, lineHeight: 20, letterSpacing: 0 },
 } as const;
 
 export const Spacing = {
