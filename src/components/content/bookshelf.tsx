@@ -98,10 +98,12 @@ function Plank() {
 }
 
 const styles = StyleSheet.create({
-  shelf: { gap: Spacing.four },
+  shelf: { gap: Spacing.three },
   row: { flexDirection: 'row', alignItems: 'flex-end' },
-  cell: { paddingHorizontal: Spacing.two },
-  book: { gap: 6 },
+  // Center each book in its column and cap its width so covers stay a phone-sized "book"
+  // (~3 shelves per screen) instead of stretching on wider viewports.
+  cell: { paddingHorizontal: Spacing.two, alignItems: 'center' },
+  book: { width: '100%', maxWidth: 112, gap: 5 },
   bookPressed: { transform: [{ translateY: -2 }] },
   cover: {
     width: '100%',
@@ -124,7 +126,7 @@ const styles = StyleSheet.create({
   coverAuthor: { marginTop: 6, fontFamily: BrandFonts.ui, fontSize: 10, color: c.textSecondary },
   badge: { position: 'absolute', right: 5, bottom: 5 },
   title: { ...Typography.meta, fontFamily: BrandFonts.uiMedium, color: c.textPrimary },
-  plankWrap: { marginTop: 6 },
+  plankWrap: { marginTop: 4 },
   plankTop: { height: 8, borderTopLeftRadius: 2, borderTopRightRadius: 2, borderBottomLeftRadius: 4, borderBottomRightRadius: 4, backgroundColor: '#C7A98F' },
   plankLip: { height: 4, marginHorizontal: 6, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: c.primarySoft },
 });
