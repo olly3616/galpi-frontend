@@ -85,7 +85,7 @@ export default function BookshelfScreen() {
           showsVerticalScrollIndicator={false}>
           <View style={styles.countRow}>
             <GalpiText variant="metaLg" color={c.textSecondary}>
-              {books.length}권 · 대사 {totalQuotes}개
+              {books.length}권 · 문장 {totalQuotes}개
             </GalpiText>
             <Badge tone="neutral">최근 담은 순</Badge>
           </View>

@@ -55,8 +55,33 @@ export function SkeletonBookGrid({ count = 6, columns = 3 }: { count?: number; c
   );
 }
 
+/** The quote-list loading shape (S-05): a card with stacked text lines. */
+export function SkeletonQuoteList({ count = 3 }: { count?: number }) {
+  return (
+    <View style={styles.quoteList}>
+      {Array.from({ length: count }).map((_, i) => (
+        <View key={i} style={styles.quoteCard}>
+          <Skeleton height={11} width={56} />
+          <Skeleton height={15} />
+          <Skeleton height={15} width="88%" />
+          <Skeleton height={15} width="62%" />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { paddingHorizontal: Spacing.two, marginBottom: Layout.gapElementLg, gap: Spacing.two },
   cover: { aspectRatio: 2 / 3, width: '100%' },
+  quoteList: { gap: Spacing.three },
+  quoteCard: {
+    backgroundColor: c.surfaceCard,
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: Radius.card,
+    padding: Layout.padCard,
+    gap: Spacing.two,
+  },
 });

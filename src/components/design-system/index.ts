@@ -12,4 +12,4 @@ export type { RadioOption } from './radio-group';
 export { ScreenHeader } from './screen-header';
 export { Segmented } from './segmented';
 export type { SegmentOption } from './segmented';
-export { Skeleton, SkeletonBookGrid } from './skeleton';
+export { Skeleton, SkeletonBookGrid, SkeletonQuoteList } from './skeleton';
