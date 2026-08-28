@@ -1,7 +1,12 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
 
 import { BrandFonts, Colors, Layout, Radius, Typography } from '@/constants/theme';
+
+// RN-web renders TextInput as a DOM <input>, which the browser gives a default focus outline
+// (a heavy black/blue ring). Native has no such outline; strip it on web so only our own
+// field border shows on focus.
+const webOutlineReset = Platform.select({ web: { outlineStyle: 'none' } }) as object | undefined;
 
 export type InputProps = TextInputProps & {
   label?: string;
@@ -26,7 +31,7 @@ export function Input({ label, hint, error, leading, trailing, style, ...rest }:
         style={[styles.field, { borderColor }]}>
         {leading}
         <TextInput
-          style={[styles.input, style]}
+          style={[styles.input, webOutlineReset, style]}
           placeholderTextColor={c.textMuted}
           onFocus={(e) => {
             setFocused(true);
