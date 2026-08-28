@@ -11,7 +11,6 @@ import {
   Button,
   EmptyState,
   ErrorState,
-  FloatingButton,
   GalpiText,
   SkeletonBookGrid,
 } from '@/components/design-system';
@@ -92,8 +91,6 @@ export default function BookshelfScreen() {
           <Bookshelf books={books} perRow={3} onSelect={(id) => router.push(`/book/${id}` as Href)} />
         </ScrollView>
       ) : null}
-
-      {state === 'ready' ? <FloatingButton label="책 추가" onPress={goAddBook} /> : null}
     </SafeAreaView>
   );
 }
