@@ -8,8 +8,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -36,15 +34,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="add-book" />
-        <Stack.Screen name="book/[id]" />
-      </Stack>
+      {/* Routes are auto-discovered from the file tree; headerShown is set globally here.
+          Declaring each nested screen explicitly triggered expo-router's "extraneous route"
+          warning, so we let the Stack populate itself. */}
+      <Stack screenOptions={{ headerShown: false }} />
     </ThemeProvider>
   );
 }

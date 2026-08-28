@@ -10,15 +10,19 @@ export type ScreenHeaderProps = {
   onBack?: () => void;
   /** Large left-aligned title for tab roots; default is the compact centered pushed-screen title. */
   large?: boolean;
+  /** Custom left element (e.g. a 취소 text button), used instead of the back chevron. */
+  leading?: React.ReactNode;
   /** Optional trailing control (e.g. a save action). */
   trailing?: React.ReactNode;
 };
 
-export function ScreenHeader({ title, onBack, large = false, trailing }: ScreenHeaderProps) {
-  const centered = !large && onBack !== undefined;
+export function ScreenHeader({ title, onBack, large = false, leading, trailing }: ScreenHeaderProps) {
+  const centered = !large && (onBack !== undefined || leading !== undefined);
   return (
     <View style={styles.header}>
-      {onBack ? (
+      {leading ? (
+        <View style={styles.leading}>{leading}</View>
+      ) : onBack ? (
         <Pressable
           onPress={onBack}
           hitSlop={8}
@@ -53,6 +57,7 @@ const styles = StyleSheet.create({
     backgroundColor: c.bgPage,
   },
   back: { marginLeft: -8 },
+  leading: { justifyContent: 'center' },
   title: {
     flex: 1,
     color: c.textPrimary,
