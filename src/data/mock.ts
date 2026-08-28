@@ -218,3 +218,18 @@ export const MOCK_FOLLOWING: MockPerson[] = [
   { id: 'u7', nickname: '세나', bio: '밑줄 긋는 습관', following: true },
   { id: 'u8', nickname: '하연', bio: '시와 산문 사이 어딘가', following: true },
 ];
+
+/**
+ * Stand-in pool for 사람 찾기 (F-08 /api/users/search) during the markup phase. The search
+ * screen filters this by nickname; the follow toggle is local until the API pass.
+ */
+export const MOCK_SEARCH_PEOPLE: MockPerson[] = [
+  { id: 'u1', nickname: '도윤', bio: '매일 한 문장씩 모으는 중', following: true },
+  { id: 'u2', nickname: '하람', bio: '소설 속 마지막 문장을 좋아해요', following: false },
+  { id: 'u3', nickname: '지오', bio: '카뮈와 카프카 사이', following: true },
+  { id: 'u9', nickname: '해든', bio: '고전 문학 함께 읽어요', following: false },
+  { id: 'u10', nickname: '보민', bio: '밤에 읽고 아침에 옮겨 적어요', following: false },
+  { id: 'u11', nickname: '단우', bio: '헤세와 카프카를 좋아합니다', following: false },
+  { id: 'u12', nickname: '리아', bio: '짧은 문장 수집가', following: false },
+  { id: 'u13', nickname: '준서', bio: '', following: false },
+];
