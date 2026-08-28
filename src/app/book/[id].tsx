@@ -112,7 +112,10 @@ export default function BookDetailScreen() {
         ) : null}
       </ScrollView>
 
-      {state === 'ready' ? <FloatingButton label="문장 추가" onPress={addQuote} /> : null}
+      {/* FAB only when the list has content — the empty state already offers its own 문장 추가. */}
+      {state === 'ready' && quotes.length > 0 ? (
+        <FloatingButton label="문장 추가" onPress={addQuote} />
+      ) : null}
     </SafeAreaView>
   );
 }
