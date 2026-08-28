@@ -28,3 +28,27 @@ export const MOCK_BOOKS: MockBook[] = [
   { id: 'b8', workId: 8, title: '변신', author: '프란츠 카프카', tint: c.accentSoft, quoteCount: 1 },
   { id: 'b9', workId: 9, title: '오만과 편견', author: '제인 오스틴', tint: c.successSoft, quoteCount: 6 },
 ];
+
+export type MockSearchResult = {
+  id: string;
+  title: string;
+  author: string;
+  publisher?: string;
+  coverUrl?: string | null;
+  /** Marks results already in the shelf → row shows "책장에 있음" instead of 추가. */
+  inShelf?: boolean;
+};
+
+/**
+ * Stand-in for the 도서 검색 API (F-04 /api/books/search) during the markup phase.
+ * add-book filters these by the typed query; a query containing "웹" returns nothing so the
+ * "검색 결과 없음 → 직접 등록" funnel (web-novel case) is reviewable.
+ */
+export const MOCK_SEARCH_RESULTS: MockSearchResult[] = [
+  { id: 's1', title: '데미안', author: '헤르만 헤세', publisher: '민음사', inShelf: true },
+  { id: 's2', title: '수레바퀴 아래서', author: '헤르만 헤세', publisher: '민음사' },
+  { id: 's3', title: '싯다르타', author: '헤르만 헤세', publisher: '문학동네' },
+  { id: 's4', title: '어린 왕자', author: '앙투안 드 생텍쥐페리', publisher: '열린책들', inShelf: true },
+  { id: 's5', title: '1984', author: '조지 오웰', publisher: '민음사' },
+  { id: 's6', title: '동물농장', author: '조지 오웰', publisher: '민음사' },
+];

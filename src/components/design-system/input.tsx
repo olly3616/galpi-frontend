@@ -7,13 +7,15 @@ export type InputProps = TextInputProps & {
   label?: string;
   hint?: string;
   error?: string;
+  /** Optional leading element (e.g. a search icon). */
+  leading?: React.ReactNode;
   /** Optional trailing control (e.g. password visibility toggle). */
   trailing?: React.ReactNode;
 };
 
 const c = Colors.light;
 
-export function Input({ label, hint, error, trailing, style, ...rest }: InputProps) {
+export function Input({ label, hint, error, leading, trailing, style, ...rest }: InputProps) {
   const [focused, setFocused] = useState(false);
   const borderColor = error ? c.error : focused ? c.borderFocus : c.border;
 
@@ -26,6 +28,7 @@ export function Input({ label, hint, error, trailing, style, ...rest }: InputPro
           { borderColor },
           focused && !error && styles.fieldFocused,
         ]}>
+        {leading}
         <TextInput
           style={[styles.input, style]}
           placeholderTextColor={c.textMuted}
