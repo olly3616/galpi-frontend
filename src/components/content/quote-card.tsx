@@ -12,6 +12,7 @@ const c = Colors.light;
 export function QuoteCard({
   characterName,
   content,
+  source,
   hasSchedule = false,
   hasMemo = false,
   clamp = 3,
@@ -19,6 +20,8 @@ export function QuoteCard({
 }: {
   characterName?: string;
   content: string;
+  /** Source line (e.g. "데미안 · 헤르만 헤세") — shown in cross-book lists like 내 문장 전체. */
+  source?: string;
   hasSchedule?: boolean;
   hasMemo?: boolean;
   clamp?: number;
@@ -49,6 +52,11 @@ export function QuoteCard({
       <Text style={styles.quote} numberOfLines={clamp}>
         {content}
       </Text>
+      {source ? (
+        <Text style={styles.source} numberOfLines={1}>
+          {source}
+        </Text>
+      ) : null}
     </Pressable>
   );
 }
@@ -89,4 +97,5 @@ const styles = StyleSheet.create({
   // Status marks sit to the right of the character name (bell = scheduled, note = memo).
   marks: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginLeft: 'auto' },
   quote: { fontFamily: BrandFonts.quote, fontSize: 20, lineHeight: 32, color: c.textPrimary },
+  source: { ...Typography.meta, color: c.textSecondary, marginTop: Spacing.three },
 });

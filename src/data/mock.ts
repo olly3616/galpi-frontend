@@ -7,6 +7,14 @@ import { Colors } from '@/constants/theme';
 
 const c = Colors.light;
 
+/** Stand-in for the signed-in user (profile screen S-09). Real data comes from auth in the API pass. */
+export const MOCK_USER = {
+  nickname: '서린',
+  bio: '접어둔 문장을 다시 펼쳐보는 사람',
+  followerCount: 18,
+  followingCount: 12,
+};
+
 export type MockBook = {
   id: string;
   workId: number;
