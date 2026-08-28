@@ -39,6 +39,9 @@ const light = {
   border: '#EAE4DA',
   borderStrong: '#D8D0C3',
   borderFocus: '#8B5E3C',
+  // Softer focus tint for text fields — a gentle warm brown (brown-300) instead of the
+  // saturated primary, so an active input reads as focused without a heavy outline.
+  borderFocusSoft: '#C7A98F',
 
   // Semantic
   error: '#C0492F',
