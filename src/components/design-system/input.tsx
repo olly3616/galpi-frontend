@@ -25,15 +25,16 @@ export function Input({ label, hint, error, leading, trailing, style, ...rest }:
   // Resting fields carry the soft brown (borderFocusSoft); focus deepens to the strong brown
   // (borderFocus == primary) so a focused input matches a selected RadioGroup row exactly.
   const borderColor = error ? c.error : focused ? c.borderFocus : c.borderFocusSoft;
+  const multiline = rest.multiline;
 
   return (
     <View>
       {label ? <Text style={styles.label}>{label}</Text> : null}
-      <View
-        style={[styles.field, { borderColor }]}>
+      <View style={[styles.field, multiline && styles.fieldMultiline, { borderColor }]}>
         {leading}
         <TextInput
-          style={[styles.input, webOutlineReset, style]}
+          style={[styles.input, multiline && styles.inputMultiline, webOutlineReset, style]}
+          textAlignVertical={multiline ? 'top' : undefined}
           placeholderTextColor={c.textMuted}
           onFocus={(e) => {
             setFocused(true);
@@ -74,12 +75,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     minHeight: Layout.controlHeight,
   },
+  fieldMultiline: { alignItems: 'stretch', paddingVertical: 2 },
   input: {
     flex: 1,
     ...Typography.body,
     color: c.textPrimary,
     paddingVertical: 13,
   },
+  inputMultiline: { paddingTop: 12, paddingBottom: 12 },
   helper: {
     ...Typography.meta,
     marginTop: 6,
