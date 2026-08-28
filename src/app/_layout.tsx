@@ -4,6 +4,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
+import { AppProviders } from '@/providers/app-providers';
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -27,11 +29,13 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      {/* Routes are auto-discovered from the file tree; headerShown is set globally here.
-          Declaring each nested screen explicitly triggered expo-router's "extraneous route"
-          warning, so we let the Stack populate itself. */}
-      <Stack screenOptions={{ headerShown: false }} />
-    </ThemeProvider>
+    <AppProviders>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        {/* Routes are auto-discovered from the file tree; headerShown is set globally here.
+            Declaring each nested screen explicitly triggered expo-router's "extraneous route"
+            warning, so we let the Stack populate itself. */}
+        <Stack screenOptions={{ headerShown: false }} />
+      </ThemeProvider>
+    </AppProviders>
   );
 }
