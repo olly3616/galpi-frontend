@@ -118,8 +118,10 @@ export function sansFamily(weight: keyof typeof PretendardFonts = FontWeights.re
 
 /**
  * Brand type families.
- * - Serif (quotes, wordmark, empty-state invitations): Nanum Myeongjo, loaded via
- *   @expo-google-fonts/nanum-myeongjo in the root layout.
+ * Currently ALL text uses Pretendard (user preference, 2026-08-28) — the `quote`/`quoteBold`
+ * roles that previously mapped to the Nanum Myeongjo serif now also point at Pretendard, so
+ * every call site renders Pretendard without changes. A future user setting (font family +
+ * size) will make this switchable; at that point a serif can be re-loaded and mapped here.
  * - UI sans: Pretendard, bundled from assets/fonts and loaded in the root layout. Because RN
  *   needs one family per weight, reference `PretendardFonts[weight]` / `sansFamily(weight)`
  *   rather than combining a single family with fontWeight.
@@ -129,8 +131,11 @@ export const BrandFonts = {
   uiMedium: PretendardFonts[FontWeights.medium],
   uiSemibold: PretendardFonts[FontWeights.semibold],
   uiBold: PretendardFonts[FontWeights.bold],
-  quote: 'NanumMyeongjo_400Regular',
-  quoteBold: 'NanumMyeongjo_700Bold',
+  // `quote`/`quoteBold` used to be Nanum Myeongjo (serif); now Pretendard so all text is one
+  // family. Kept as separate names so a future font setting can remap them without touching
+  // the quote/wordmark call sites.
+  quote: PretendardFonts[FontWeights.regular],
+  quoteBold: PretendardFonts[FontWeights.bold],
 } as const;
 
 /** Text role presets — mirrors the .galpi-* classes in tokens/typography.css. Pair with a Colors.* value for color. */
