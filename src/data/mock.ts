@@ -188,3 +188,33 @@ export const MOCK_FEED: MockFeedItem[] = [
     likedByMe: false,
   },
 ];
+
+export type MockPerson = {
+  id: string;
+  nickname: string;
+  bio?: string;
+  /** Whether the signed-in user currently follows this person (seed state for the toggle). */
+  following?: boolean;
+};
+
+/**
+ * Stand-ins for the 팔로워/팔로잉 목록 (F-08 /api/users/{id}/followers · /following) during the
+ * markup phase — opened from the 팔로워 stat on the profile screen. The follow button toggles
+ * locally; wired to /api/users/{id}/follow in the API pass.
+ */
+export const MOCK_FOLLOWERS: MockPerson[] = [
+  { id: 'u1', nickname: '도윤', bio: '매일 한 문장씩 모으는 중', following: true },
+  { id: 'u2', nickname: '하람', bio: '소설 속 마지막 문장을 좋아해요', following: false },
+  { id: 'u3', nickname: '지오', bio: '카뮈와 카프카 사이', following: true },
+  { id: 'u4', nickname: '민서', bio: '데미안을 세 번 읽었습니다', following: false },
+  { id: 'u5', nickname: '유나', bio: '고전에서 위로를 찾는 사람', following: false },
+  { id: 'u6', nickname: '태오', bio: '', following: true },
+];
+
+export const MOCK_FOLLOWING: MockPerson[] = [
+  { id: 'u1', nickname: '도윤', bio: '매일 한 문장씩 모으는 중', following: true },
+  { id: 'u3', nickname: '지오', bio: '카뮈와 카프카 사이', following: true },
+  { id: 'u6', nickname: '태오', bio: '', following: true },
+  { id: 'u7', nickname: '세나', bio: '밑줄 긋는 습관', following: true },
+  { id: 'u8', nickname: '하연', bio: '시와 산문 사이 어딘가', following: true },
+];
