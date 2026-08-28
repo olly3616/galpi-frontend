@@ -42,12 +42,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   setSession: async ({ accessToken, refreshToken, user }) => {
-    await tokenStorage.set(accessToken, refreshToken);
+    // Update in-memory state first so the token is available immediately (navigation / next
+    // request), then mirror to secure storage.
     set((prev) => ({ accessToken, refreshToken, user: user ?? prev.user, status: 'authenticated' }));
+    await tokenStorage.set(accessToken, refreshToken);
   },
 
   clearSession: async () => {
-    await tokenStorage.clear();
     set({ accessToken: null, refreshToken: null, user: null, status: 'unauthenticated' });
+    await tokenStorage.clear();
   },
 }));

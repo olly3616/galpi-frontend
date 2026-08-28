@@ -1,7 +1,11 @@
 import { Redirect } from 'expo-router';
 
-// WF-01 app entry. During the markup phase this always lands on login; once auth is wired,
-// this becomes conditional on a stored token (valid token → /home, otherwise → /login).
+import { useAuthStore } from '@/stores/auth-store';
+
+// WF-01 app entry. Waits for the session to hydrate, then routes by auth state:
+// a stored token → /home, otherwise → /login.
 export default function Index() {
-  return <Redirect href="/login" />;
+  const status = useAuthStore((s) => s.status);
+  if (status === 'loading') return null; // splash stays up until hydration resolves
+  return <Redirect href={status === 'authenticated' ? '/home' : '/login'} />;
 }
