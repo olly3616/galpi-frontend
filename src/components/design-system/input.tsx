@@ -22,7 +22,9 @@ const c = Colors.light;
 
 export function Input({ label, hint, error, leading, trailing, style, ...rest }: InputProps) {
   const [focused, setFocused] = useState(false);
-  const borderColor = error ? c.error : focused ? c.borderFocusSoft : c.border;
+  // Resting fields carry the soft brown (borderFocusSoft); focus deepens to the strong brown
+  // (borderFocus == primary) so a focused input matches a selected RadioGroup row exactly.
+  const borderColor = error ? c.error : focused ? c.borderFocus : c.borderFocusSoft;
 
   return (
     <View>

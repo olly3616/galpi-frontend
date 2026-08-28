@@ -30,7 +30,7 @@ export function RadioGroup<T extends string>({
               onPress={() => onChange(o.id)}
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}
-              style={[styles.row, { borderColor: on ? c.primary : c.border }]}>
+              style={[styles.row, { borderColor: on ? c.primary : c.borderFocusSoft }]}>
               <View style={[styles.radio, { borderColor: on ? c.primary : c.borderStrong }]}>
                 {on ? <View style={styles.radioDot} /> : null}
               </View>
