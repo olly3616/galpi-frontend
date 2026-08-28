@@ -25,8 +25,7 @@ export default function ProfileScreen() {
   const stats: Stat[] = [
     { label: '책', value: bookCount, href: '/home' as Href },
     { label: '문장', value: quoteCount, href: '/my-quotes' as Href },
-    // 팔로워 목록은 소셜 단계에서 — 지금은 표시만.
-    { label: '팔로워', value: MOCK_USER.followerCount },
+    { label: '팔로워', value: MOCK_USER.followerCount, href: '/followers' as Href },
   ];
 
   const showToast = (msg: string) => {
