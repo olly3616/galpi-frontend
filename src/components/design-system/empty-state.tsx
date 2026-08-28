@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { BrandFonts, Colors, Spacing, Typography } from '@/constants/theme';
 import { GalpiText } from './galpi-text';
 
 const c = Colors.light;
@@ -24,7 +24,7 @@ export function EmptyState({
       <View style={styles.medallion}>
         <Icon size={30} color={c.primary} />
       </View>
-      <GalpiText variant="quote" style={styles.title}>
+      <GalpiText variant="body" style={styles.title}>
         {title}
       </GalpiText>
       {description ? (
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: Spacing.five,
   },
-  title: { fontSize: 18, lineHeight: 29, textAlign: 'center' },
+  title: { fontFamily: BrandFonts.uiMedium, fontSize: 18, lineHeight: 26, textAlign: 'center' },
   description: { ...Typography.metaLg, marginTop: Spacing.two, textAlign: 'center' },
   action: { marginTop: Spacing.four },
 });

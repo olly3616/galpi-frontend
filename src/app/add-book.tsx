@@ -1,10 +1,13 @@
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { BookOpen, ImagePlus, Search } from 'lucide-react-native';
+import { BookOpen, ImagePlus, Search, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -65,6 +68,18 @@ export default function AddBookScreen() {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [workType, setWorkType] = useState<WorkType>('novel');
+  const [coverUri, setCoverUri] = useState<string | null>(null);
+
+  // Markup phase: pick + preview locally only. Uploading to the server is wired with F-05.
+  const pickCover = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [2, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled) setCoverUri(result.assets[0].uri);
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -150,12 +165,43 @@ export default function AddBookScreen() {
               />
               <View>
                 <Text style={styles.coverLabel}>표지 이미지</Text>
-                <View style={styles.coverUpload}>
-                  <ImagePlus size={20} color={c.textSecondary} />
-                  <GalpiText variant="metaLg" color={c.textSecondary} style={styles.coverUploadText}>
-                    선택 · 없으면 제목으로 기본 표지를 만들어요
-                  </GalpiText>
-                </View>
+                {coverUri ? (
+                  <View style={styles.coverPreviewRow}>
+                    <Image source={{ uri: coverUri }} style={styles.coverPreview} contentFit="cover" />
+                    <View style={styles.coverPreviewInfo}>
+                      <GalpiText variant="metaLg" color={c.textPrimary}>
+                        표지를 선택했어요
+                      </GalpiText>
+                      <Pressable
+                        onPress={pickCover}
+                        hitSlop={6}
+                        accessibilityRole="button"
+                        accessibilityLabel="표지 다시 선택">
+                        <GalpiText variant="meta" color={c.textLink}>
+                          다시 선택
+                        </GalpiText>
+                      </Pressable>
+                    </View>
+                    <Pressable
+                      onPress={() => setCoverUri(null)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel="표지 제거">
+                      <X size={18} color={c.textSecondary} />
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={pickCover}
+                    accessibilityRole="button"
+                    accessibilityLabel="표지 이미지 선택"
+                    style={({ pressed }) => [styles.coverUpload, pressed && styles.coverUploadPressed]}>
+                    <ImagePlus size={20} color={c.textSecondary} />
+                    <GalpiText variant="metaLg" color={c.textSecondary} style={styles.coverUploadText}>
+                      선택 · 없으면 제목으로 기본 표지를 만들어요
+                    </GalpiText>
+                  </Pressable>
+                )}
               </View>
               <Button
                 label="등록"
@@ -200,5 +246,23 @@ const styles = StyleSheet.create({
     borderColor: c.borderStrong,
     borderRadius: Radius.control,
   },
+  coverUploadPressed: { backgroundColor: c.surfaceSunken },
   coverUploadText: { flex: 1 },
+  coverPreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.three,
+    backgroundColor: c.surfaceCard,
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: Radius.control,
+  },
+  coverPreview: {
+    width: 44,
+    height: 66,
+    borderRadius: Radius.cover,
+    backgroundColor: c.primarySoft,
+  },
+  coverPreviewInfo: { flex: 1, gap: 2 },
 });

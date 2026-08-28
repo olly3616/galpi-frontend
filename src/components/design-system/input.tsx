@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
 
-import { BrandFonts, Colors, Layout, Radius, Shadows, Typography } from '@/constants/theme';
+import { BrandFonts, Colors, Layout, Radius, Typography } from '@/constants/theme';
 
 export type InputProps = TextInputProps & {
   label?: string;
@@ -17,17 +17,13 @@ const c = Colors.light;
 
 export function Input({ label, hint, error, leading, trailing, style, ...rest }: InputProps) {
   const [focused, setFocused] = useState(false);
-  const borderColor = error ? c.error : focused ? c.borderFocus : c.border;
+  const borderColor = error ? c.error : focused ? c.borderFocusSoft : c.border;
 
   return (
     <View>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <View
-        style={[
-          styles.field,
-          { borderColor },
-          focused && !error && styles.fieldFocused,
-        ]}>
+        style={[styles.field, { borderColor }]}>
         {leading}
         <TextInput
           style={[styles.input, style]}
@@ -71,7 +67,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     minHeight: Layout.controlHeight,
   },
-  fieldFocused: Shadows.md as object,
   input: {
     flex: 1,
     ...Typography.body,
