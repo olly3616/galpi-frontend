@@ -52,3 +52,55 @@ export const MOCK_SEARCH_RESULTS: MockSearchResult[] = [
   { id: 's5', title: '1984', author: '조지 오웰', publisher: '민음사' },
   { id: 's6', title: '동물농장', author: '조지 오웰', publisher: '민음사' },
 ];
+
+export type MockQuote = {
+  id: string;
+  bookId: string;
+  characterName?: string;
+  content: string;
+  memo?: string;
+  hasSchedule?: boolean;
+  visibility?: 'PRIVATE' | 'FOLLOWERS';
+};
+
+/**
+ * Stand-in for the 대사 data (F-07 /api/works/{id}/quotes) during the markup phase.
+ * 책 상세(S-05) reads the quotes for a book by filtering on bookId. Public-domain quotes.
+ */
+export const MOCK_QUOTES: MockQuote[] = [
+  {
+    id: 'q1',
+    bookId: 'b1',
+    characterName: '싱클레어',
+    content: '새는 알에서 나오려고 투쟁한다. 알은 세계다. 태어나려는 자는 한 세계를 파괴해야 한다.',
+    memo: '처음 읽었을 때 한참 멈춰 있었던 문장.',
+    hasSchedule: true,
+    visibility: 'PRIVATE',
+  },
+  {
+    id: 'q2',
+    bookId: 'b1',
+    characterName: '데미안',
+    content:
+      '우리가 어떤 사람을 미워한다면, 우리는 그의 모습 속에서 우리 자신 안에 있는 무엇인가를 미워하는 것이다.',
+    visibility: 'PRIVATE',
+  },
+  { id: 'q3', bookId: 'b1', content: '내 안에서 솟아나는 것, 그것을 살아보려 했다.', visibility: 'PRIVATE' },
+  {
+    id: 'q6',
+    bookId: 'b3',
+    characterName: '여우',
+    content: '가장 중요한 것은 눈에 보이지 않아.',
+    memo: '친구에게 그대로 보내줬다.',
+    hasSchedule: true,
+    visibility: 'FOLLOWERS',
+  },
+  {
+    id: 'q7',
+    bookId: 'b3',
+    characterName: '어린 왕자',
+    content: '네가 오후 네 시에 온다면, 나는 세 시부터 행복해지기 시작할 거야.',
+    visibility: 'PRIVATE',
+  },
+  { id: 'q8', bookId: 'b4', content: '인간은 파괴될 수 있지만 패배하지 않는다.', hasSchedule: true, visibility: 'PRIVATE' },
+];
