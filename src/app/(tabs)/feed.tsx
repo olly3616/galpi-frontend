@@ -1,6 +1,7 @@
-import { Users } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { UserPlus, Users } from 'lucide-react-native';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FeedCard } from '@/components/content/feed-card';
@@ -13,6 +14,7 @@ const c = Colors.light;
 // 팔로잉 피드 (S-08): 문장 shared by people the user follows. Every card shows its source work.
 // Like state is local for the markup phase; wired to /api/quotes/{id}/like in the API pass.
 export default function FeedScreen() {
+  const router = useRouter();
   const [likedOverride, setLikedOverride] = useState<Record<string, boolean>>({});
   const toggleLike = (id: string) =>
     setLikedOverride((m) => ({ ...m, [id]: !(m[id] ?? MOCK_FEED.find((f) => f.id === id)?.likedByMe ?? false) }));
@@ -23,6 +25,14 @@ export default function FeedScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <GalpiText variant="title">피드</GalpiText>
+        <Pressable
+          onPress={() => router.push('/user-search')}
+          hitSlop={8}
+          style={styles.searchBtn}
+          accessibilityRole="button"
+          accessibilityLabel="사람 찾기">
+          <UserPlus size={22} color={c.textSecondary} />
+        </Pressable>
       </View>
 
       {isEmpty ? (
@@ -63,7 +73,15 @@ export default function FeedScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bgPage },
-  header: { paddingHorizontal: Layout.gutterScreen, paddingTop: Spacing.two, paddingBottom: Spacing.two },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Layout.gutterScreen,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.two,
+  },
+  searchBtn: { padding: Spacing.one },
   centered: { flex: 1, justifyContent: 'center', paddingHorizontal: Spacing.two },
   body: {
     paddingHorizontal: Layout.gutterScreen,
