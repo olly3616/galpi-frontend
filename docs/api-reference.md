@@ -140,15 +140,28 @@ WEEKLY면 `daysOfWeek` 필수, ONCE면 `sendDate` 필수.
 ### `DELETE /api/quotes/{quoteId}/like` → 200 · LikeResponse
 멱등. Res: `{ liked: false, likeCount }`
 
+### `GET /api/users/me` → 200 · MyProfileResponse
+내 프로필 + 카운트. 아바타는 `profileImageUrl`(없으면 null).
+- Res: `{ userId, nickname, bio, profileImageUrl, followerCount, followingCount, bookCount, quoteCount }`
+
+### `PATCH /api/users/me` → 200 · MyProfileResponse
+부분 수정(전달 필드만). 사진은 `/api/images` 업로드 url을 `profileImageUrl`에 넣기. 빈 `bio`는 소개 비움.
+- Body(all opt): `nickname`(2~20자, 중복 불가), `bio`(≤500자), `profileImageUrl`
+- Errors: `NICKNAME_DUPLICATED`(409), `VALIDATION_ERROR`(400)
+
 ### `GET /api/users/search` → 200 · PageResponse\<UserSearchItem\>
 닉네임 부분 일치(본인 제외).
 - Query: `query`(req), `page`, `size`
-- Item: `{ userId, nickname, bio, isFollowing }`
+- Item: `{ userId, nickname, bio, profileImageUrl, isFollowing }`
 
 ### `GET /api/users/{userId}` → 200 · ProfileResponse
 본인/팔로우 중일 때만 FOLLOWERS 공개 대사 노출(그 외 빈 목록). 대사는 페이지네이션.
 - Path: `userId` · Query: `page`, `size`
-- Res: `{ userId, nickname, bio, followerCount, followingCount, isFollowing, quotes: PageResponse<{ quoteId, content, characterName, work: {title,author} }> }`
+- Res: `{ userId, nickname, bio, profileImageUrl, followerCount, followingCount, isFollowing, quotes: PageResponse<{ quoteId, content, characterName, work: {title,author} }> }`
+
+### `GET /api/users/{userId}/followers` · `GET /api/users/{userId}/following` → 200 · PageResponse\<UserSearchItem\>
+그 사용자의 팔로워/팔로잉 목록. 각 항목 `isFollowing`은 **내가** 그 사람을 팔로우 중인지.
+- Query: `page`, `size` · Item: `{ userId, nickname, bio, profileImageUrl, isFollowing }`
 
 ### `POST /api/users/{userId}/follow` → 200 · FollowResponse
 자기 자신 불가, 멱등. Res: `{ following: true }`
