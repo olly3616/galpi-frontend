@@ -111,8 +111,8 @@
 ## 예약 알림 (Schedules)
 
 ### `POST /api/quotes/{quoteId}/schedules` → 201 · ScheduleResponse
-WEEKLY면 `daysOfWeek` 필수.
-- Body: `sendTime`(req, `"HH:mm"`), `repeatType`(req, `DAILY|WEEKLY|ONCE`), `daysOfWeek`(WEEKLY 시 필수, `"MON,WED,FRI"`)
+WEEKLY면 `daysOfWeek` 필수, ONCE면 `sendDate` 필수.
+- Body: `sendTime`(req, `"HH:mm"`), `repeatType`(req, `DAILY|WEEKLY|ONCE`), `daysOfWeek`(WEEKLY 시 필수, `"MON,WED,FRI"`), `sendDate`(ONCE 시 필수, `"YYYY-MM-DD"`)
 - Res: `{ scheduleId, sendTime, repeatType, daysOfWeek, isActive }`
 
 ### `GET /api/schedules/me` → 200 · PageResponse\<ScheduleWithQuoteResponse\>
@@ -163,3 +163,11 @@ WEEKLY면 `daysOfWeek` 필수.
 ### `POST /api/device-tokens` → 200 · SuccessResponse
 FCM 토큰 등록(같은 토큰 재전송 시 소유자/플랫폼만 upsert).
 - Body: `token`(req), `platform`(req, `ANDROID|IOS`)
+
+---
+
+## 이미지 업로드
+
+### `POST /api/images` → 201
+multipart, `file` 파트로 이미지 전송. 허용: jpg/png/webp/gif, 최대 5MB.
+- Res: `{ url }` (예: `https://<버킷>.s3.ap-northeast-2.amazonaws.com/covers/<uuid>.jpg`)
