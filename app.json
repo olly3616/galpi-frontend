@@ -2,6 +2,7 @@
   "expo": {
     "name": "galpi-app",
     "slug": "galpi-app",
+    "owner": "olly3616",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -13,6 +14,7 @@
     },
     "android": {
       "package": "com.galpi.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -52,6 +54,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "35b99c95-ffcd-4ef6-a5a9-50d181ea097c"
+      }
     }
   }
 }
