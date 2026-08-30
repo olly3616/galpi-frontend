@@ -34,6 +34,10 @@ yarn-error.*
 .env*.local
 .env
 
+# Firebase — client config injected via EAS Secret at build time (never commit)
+google-services.json
+GoogleService-Info.plist
+
 # typescript
 *.tsbuildinfo
 
