@@ -32,15 +32,15 @@ async function refreshAccessToken(): Promise<string | null> {
   if (!refreshToken) return null;
   try {
     // Uses a bare axios call (not `api`) to avoid the interceptor recursing on 401.
-    // Per the API spec, refresh returns ONLY a new accessToken; the refreshToken is reused.
-    const res = await axios.post<{ accessToken: string }>(
+    // Refresh tokens ROTATE: the endpoint returns a new pair and invalidates the old refresh
+    // token, so the new refreshToken must be stored — reusing the old one fails next time.
+    const res = await axios.post<{ accessToken: string; refreshToken: string }>(
       `${API_BASE_URL}/api/auth/refresh`,
       { refreshToken },
       { headers: { 'Content-Type': 'application/json' } },
     );
-    const accessToken = res.data.accessToken;
-    await setSession({ accessToken, refreshToken });
-    return accessToken;
+    await setSession({ accessToken: res.data.accessToken, refreshToken: res.data.refreshToken });
+    return res.data.accessToken;
   } catch {
     await clearSession();
     return null;

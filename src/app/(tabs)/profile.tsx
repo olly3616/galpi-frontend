@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, GalpiText } from '@/components/design-system';
 import { BrandFonts, Colors, Layout, Radius, Spacing, Typography } from '@/constants/theme';
 import { MOCK_BOOKS, MOCK_USER } from '@/data/mock';
+import { useLogout } from '@/features/auth/queries';
 
 const c = Colors.light;
 
@@ -33,9 +34,10 @@ export default function ProfileScreen() {
     setTimeout(() => setToast(null), 1600);
   };
 
+  const logoutMutation = useLogout();
   const logout = () => {
-    // WF-10 markup: clear session → login. Token removal is wired in the API pass.
-    router.replace('/login');
+    // WF-10: revoke the refresh token server-side, clear the session + cache, then to login.
+    logoutMutation.mutate(undefined, { onSettled: () => router.replace('/login') });
   };
 
   return (

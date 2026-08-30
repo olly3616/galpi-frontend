@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandFonts, Colors, Layout, Spacing } from '@/constants/theme';
 import { Button, ErrorBanner, GalpiText, Input, Logo, Wordmark } from '@/components/design-system';
+import { authErrorMessage } from '@/features/auth/api';
+import { useLogin } from '@/features/auth/queries';
 
 const c = Colors.light;
 
@@ -21,22 +23,25 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const loginMutation = useLogin();
+  const loading = loginMutation.isPending;
+
   const submit = () => {
-    // Markup phase: no API yet. Basic empty-field guard demonstrates the error state,
-    // then a short spinner leads to the home tab. Real auth (F-02) is wired in the API pass.
+    if (loading) return;
     if (!email.trim() || !password) {
-      setError('이메일 또는 비밀번호가 올바르지 않습니다');
+      setError('이메일과 비밀번호를 입력해주세요.');
       return;
     }
     setError('');
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.replace('/home');
-    }, 800);
+    loginMutation.mutate(
+      { email: email.trim(), password },
+      {
+        onSuccess: () => router.replace('/home'),
+        onError: (err) => setError(authErrorMessage(err)),
+      },
+    );
   };
 
   return (
