@@ -12,7 +12,7 @@ export type FeedItem = {
   isLiked: boolean;
 };
 
-export type UserSearchItem = { userId: number; nickname: string; bio?: string; isFollowing: boolean };
+export type UserSearchItem = { userId: number; nickname: string; bio?: string; profileImageUrl?: string | null; isFollowing: boolean };
 export type LikeResponse = { liked: boolean; likeCount: number };
 export type FollowResponse = { following: boolean };
 
