@@ -6,7 +6,7 @@ const c = Colors.light;
 
 export type RadioOption<T extends string> = { id: T; label: string; description?: string };
 
-/** Stacked choice rows — 유형 선택(소설/웹소설), 공개 범위(나만 보기/팔로워 공개). */
+/** Stacked choice rows — e.g. 공개 범위(나만 보기/팔로워 공개). */
 export function RadioGroup<T extends string>({
   label,
   options,
