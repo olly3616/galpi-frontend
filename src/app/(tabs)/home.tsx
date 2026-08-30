@@ -1,11 +1,10 @@
 import { useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import { Library, Plus, Search } from 'lucide-react-native';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Bookshelf } from '@/components/content/bookshelf';
+import { Bookshelf, type ShelfBook } from '@/components/content/bookshelf';
 import {
   Badge,
   Button,
@@ -15,21 +14,33 @@ import {
   SkeletonBookGrid,
 } from '@/components/design-system';
 import { Colors, Layout, Spacing } from '@/constants/theme';
-import { MOCK_BOOKS } from '@/data/mock';
+import { useMyShelf } from '@/features/bookshelf/queries';
 
 const c = Colors.light;
 
-type ScreenState = 'loading' | 'error' | 'ready';
-
 export default function BookshelfScreen() {
   const router = useRouter();
-  // Markup phase: static state + mock data. Real fetch (F-06) arrives in the API pass;
-  // `state`/`books` become the query result, and loading/error/empty render from it.
-  const [state] = useState<ScreenState>('ready');
-  const books = MOCK_BOOKS;
+  const shelf = useMyShelf();
 
-  const goAddBook = () => router.push('/add-book' as Href); // /add-book route arrives in S-04
-  const totalQuotes = books.reduce((sum, b) => sum + b.quoteCount, 0);
+  const books: ShelfBook[] =
+    shelf.data?.pages.flatMap((p) =>
+      p.items.map((b) => ({
+        id: String(b.workId),
+        title: b.title,
+        author: b.author,
+        coverUrl: b.coverUrl,
+        quoteCount: b.quoteCount,
+      })),
+    ) ?? [];
+
+  const goAddBook = () => router.push('/add-book' as Href);
+
+  // Infinite scroll: load the next page as the list nears the bottom.
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
+    if (nearBottom && shelf.hasNextPage && !shelf.isFetchingNextPage) shelf.fetchNextPage();
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -45,52 +56,47 @@ export default function BookshelfScreen() {
         </View>
       </View>
 
-      {state === 'loading' ? (
+      {shelf.isPending ? (
         <View style={styles.body}>
           <SkeletonBookGrid columns={3} count={6} />
         </View>
-      ) : null}
-
-      {state === 'error' ? (
+      ) : shelf.isError ? (
         <View style={styles.centered}>
           <ErrorState
             title="책장을 불러오지 못했습니다"
             description="네트워크를 확인하고 다시 시도해주세요"
-            onRetry={() => {}}
+            onRetry={() => shelf.refetch()}
           />
         </View>
-      ) : null}
-
-      {state === 'ready' && books.length === 0 ? (
+      ) : books.length === 0 ? (
         <View style={styles.centered}>
           <EmptyState
             icon={Library}
             title="첫 책을 책장에 꽂아보세요"
             description="좋아하는 구절을 담아둘 책을 골라주세요"
-            action={
-              <Button
-                label="책 추가"
-                onPress={goAddBook}
-                iconLeft={<Plus size={18} color={c.textOnPrimary} />}
-              />
-            }
+            action={<Button label="책 추가" onPress={goAddBook} iconLeft={<Plus size={18} color={c.textOnPrimary} />} />}
           />
         </View>
-      ) : null}
-
-      {state === 'ready' && books.length > 0 ? (
+      ) : (
         <ScrollView
           contentContainerStyle={styles.body}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={200}>
           <View style={styles.countRow}>
             <GalpiText variant="metaLg" color={c.textSecondary}>
-              {books.length}권 · 문장 {totalQuotes}개
+              {books.length}권{shelf.hasNextPage ? '+' : ''}
             </GalpiText>
             <Badge tone="neutral">최근 담은 순</Badge>
           </View>
           <Bookshelf books={books} perRow={3} onSelect={(id) => router.push(`/book/${id}` as Href)} />
+          {shelf.isFetchingNextPage ? (
+            <View style={styles.footerLoading}>
+              <ActivityIndicator color={c.primary} />
+            </View>
+          ) : null}
         </ScrollView>
-      ) : null}
+      )}
     </SafeAreaView>
   );
 }
@@ -119,4 +125,5 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     paddingBottom: Spacing.four,
   },
+  footerLoading: { paddingVertical: Spacing.four, alignItems: 'center' },
 });
