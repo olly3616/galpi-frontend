@@ -31,6 +31,7 @@ import { Colors, Layout, Radius, Spacing, Typography } from '@/constants/theme';
 import type { BookSearchItem } from '@/features/bookshelf/api';
 import { useAddBook, useSearchBooks } from '@/features/bookshelf/queries';
 import { ApiError } from '@/lib/api/errors';
+import { uploadImage } from '@/lib/api/upload';
 
 const c = Colors.light;
 
@@ -97,10 +98,10 @@ export default function AddBookScreen() {
   const [author, setAuthor] = useState('');
   const [coverUri, setCoverUri] = useState<string | null>(null);
   const [manualError, setManualError] = useState('');
+  const [uploading, setUploading] = useState(false);
   const addManual = useAddBook();
+  const busy = uploading || addManual.isPending;
 
-  // Cover is a local preview only — there is no image-upload endpoint yet, so a manual book is
-  // registered without a coverUrl (the shelf renders a title-based fallback cover).
   const pickCover = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -111,14 +112,30 @@ export default function AddBookScreen() {
     if (!result.canceled) setCoverUri(result.assets[0].uri);
   };
 
-  const submitManual = () => {
-    if (!title.trim() || addManual.isPending) return;
+  const submitManual = async () => {
+    if (!title.trim() || busy) return;
     setManualError('');
+
+    // Upload the picked cover first (if any), then register the book with its hosted URL.
+    let coverUrl: string | undefined;
+    if (coverUri) {
+      setUploading(true);
+      try {
+        coverUrl = (await uploadImage(coverUri)).url;
+      } catch {
+        setUploading(false);
+        setManualError('표지 업로드에 실패했어요. 다시 시도해주세요.');
+        return;
+      }
+      setUploading(false);
+    }
+
     addManual.mutate(
       {
         source: 'MANUAL',
         title: title.trim(),
         author: author.trim() || undefined,
+        coverUrl,
       },
       {
         onSuccess: () => router.back(),
@@ -266,11 +283,11 @@ export default function AddBookScreen() {
               ) : null}
 
               <Button
-                label="등록"
+                label={uploading ? '표지 올리는 중' : '등록'}
                 size="lg"
                 fullWidth
                 disabled={!title.trim()}
-                loading={addManual.isPending}
+                loading={busy}
                 onPress={submitManual}
               />
             </View>
