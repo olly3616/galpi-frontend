@@ -1,13 +1,15 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import { Bell, ChevronDown, ChevronUp, Ellipsis, StickyNote } from 'lucide-react-native';
 import { useState } from 'react';
-import { PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   Button,
   Calendar,
   Card,
+  ErrorState,
   GalpiText,
   ScreenHeader,
   Segmented,
@@ -16,23 +18,35 @@ import {
   type Weekday,
 } from '@/components/design-system';
 import { BrandFonts, Colors, Layout, Spacing, Typography } from '@/constants/theme';
-import { MOCK_BOOKS, MOCK_QUOTES } from '@/data/mock';
+import type { ScheduleSummary } from '@/features/quotes/api';
+import { useDeleteQuote, useQuoteDetail } from '@/features/quotes/queries';
 
 const c = Colors.light;
 
 type RepeatType = 'daily' | 'weekly' | 'once';
 type Alarm = { time: string; repeat: string };
 
+// Format a server schedule into the compact "time · repeat" display used in the alarm list.
+function scheduleLabel(s: ScheduleSummary): string {
+  if (s.repeatType === 'DAILY') return '매일';
+  if (s.repeatType === 'WEEKLY') return s.daysOfWeek?.split(',').join('·') ?? '매주';
+  return '한 번';
+}
+
 export default function QuoteDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const quote = MOCK_QUOTES.find((q) => q.id === id);
-  const book = quote ? MOCK_BOOKS.find((b) => b.id === quote.bookId) : undefined;
+  const quoteId = Number(id);
 
-  // Markup phase: seed an existing alarm for quotes flagged hasSchedule so the list state shows.
-  const [alarms, setAlarms] = useState<Alarm[]>(
-    quote?.hasSchedule ? [{ time: '07:30', repeat: '매일' }] : [],
-  );
+  const detail = useQuoteDetail(quoteId);
+  const removeQuote = useDeleteQuote();
+  const quote = detail.data;
+  const book = quote?.work;
+
+  // Alarm editor is still local markup — real schedule CRUD lands in the 알림(schedules) branch.
+  // The list below is seeded from the quote's real schedules for display.
+  const [alarms, setAlarms] = useState<Alarm[]>([]);
+  const [seededId, setSeededId] = useState<number | null>(null);
   const [hour, setHour] = useState('07');
   const [minute, setMinute] = useState('30');
   const [repeat, setRepeat] = useState<RepeatType>('daily');
@@ -40,29 +54,66 @@ export default function QuoteDetailScreen() {
   const [onceDate, setOnceDate] = useState(() => new Date());
   const [on, setOn] = useState(true);
 
-  if (!quote) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScreenHeader title="문장" onBack={() => router.back()} />
-        <View style={styles.centered}>
-          <GalpiText variant="body" color={c.textSecondary}>
-            문장을 찾을 수 없어요
-          </GalpiText>
-        </View>
-      </SafeAreaView>
-    );
+  // Seed the alarm list from the loaded quote once (React's "adjust state during render" pattern).
+  if (quote && seededId !== quote.quoteId) {
+    setSeededId(quote.quoteId);
+    setAlarms(quote.schedules.map((s) => ({ time: s.sendTime, repeat: scheduleLabel(s) })));
   }
 
+  const goEdit = () => router.push(`/quote/new?quoteId=${quoteId}` as Href);
+  const confirmDelete = () => {
+    Alert.alert('문장 삭제', '이 문장을 삭제할까요? 되돌릴 수 없어요.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => removeQuote.mutate({ quoteId, workId: book?.workId ?? NaN }, { onSuccess: () => router.back() }),
+      },
+    ]);
+  };
+  const openMenu = () => {
+    Alert.alert('문장', undefined, [
+      { text: '수정', onPress: goEdit },
+      { text: '삭제', style: 'destructive', onPress: confirmDelete },
+      { text: '취소', style: 'cancel' },
+    ]);
+  };
+
   const saveAlarm = () => {
-    // Markup phase: append locally. Real create (F-10 POST /quotes/{id}/schedules) is wired later.
-    const repeatLabel =
+    const repeatText =
       repeat === 'daily'
         ? '매일'
         : repeat === 'weekly'
           ? days.join('·')
           : `${onceDate.getMonth() + 1}월 ${onceDate.getDate()}일`;
-    setAlarms((prev) => [...prev, { time: `${hour}:${minute}`, repeat: repeatLabel }]);
+    setAlarms((prev) => [...prev, { time: `${hour}:${minute}`, repeat: repeatText }]);
   };
+
+  if (detail.isPending) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <ScreenHeader title="문장" onBack={() => router.back()} />
+        <View style={styles.centered}>
+          <ActivityIndicator color={c.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (detail.isError || !quote) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <ScreenHeader title="문장" onBack={() => router.back()} />
+        <View style={styles.centered}>
+          <ErrorState
+            title="문장을 불러오지 못했습니다"
+            description="네트워크를 확인하고 다시 시도해주세요"
+            onRetry={() => detail.refetch()}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -70,7 +121,7 @@ export default function QuoteDetailScreen() {
         title="문장"
         onBack={() => router.back()}
         trailing={
-          <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="수정·삭제">
+          <Pressable onPress={openMenu} hitSlop={8} accessibilityRole="button" accessibilityLabel="수정·삭제">
             <Ellipsis size={22} color={c.textSecondary} />
           </Pressable>
         }
@@ -79,16 +130,15 @@ export default function QuoteDetailScreen() {
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         {/* Quote — the protagonist */}
         <View>
-          {quote.characterName ? (
-            <Text style={styles.character}>{quote.characterName}</Text>
-          ) : null}
+          {quote.characterName ? <Text style={styles.character}>{quote.characterName}</Text> : null}
           <Text style={styles.quote}>
             <Text style={styles.openQuote}>“</Text>
             {quote.content}
           </Text>
           {book ? (
             <GalpiText variant="meta" color={c.textSecondary} style={styles.source}>
-              {book.title} · {book.author}
+              {book.title}
+              {book.author ? ` · ${book.author}` : ''}
             </GalpiText>
           ) : null}
         </View>
@@ -108,7 +158,7 @@ export default function QuoteDetailScreen() {
           </Card>
         ) : null}
 
-        {/* Alarm setting — the highlight */}
+        {/* Alarm setting — the highlight (editor persistence arrives in the schedules branch) */}
         <View>
           <Text style={styles.sectionTitle}>이 문장을 언제 만날까요?</Text>
           {alarms.length === 0 ? (
@@ -177,8 +227,6 @@ function TimeField({
   const wrapFmt = (n: number) => String(((n % (max + 1)) + (max + 1)) % (max + 1)).padStart(2, '0');
   const bump = (dir: number) => onChange((p) => wrapFmt(parseInt(p, 10) + dir * step));
 
-  // Drag the number vertically to change it: up increases, down decreases (minutes by `step`).
-  // Deltas apply incrementally (via a closure accumulator) so no stale value is read.
   const [pan] = useState(() => {
     let dragged = 0;
     return PanResponder.create({
@@ -203,7 +251,6 @@ function TimeField({
       <Pressable onPress={() => bump(1)} hitSlop={6} accessibilityLabel="증가">
         <ChevronUp size={16} color={c.textMuted} />
       </Pressable>
-      {/* Drag up/down on the number to change it (minutes by 5). */}
       <View {...pan.panHandlers} accessibilityLabel="위아래로 드래그하여 값 변경">
         <Text style={styles.timeValue}>{value}</Text>
       </View>
