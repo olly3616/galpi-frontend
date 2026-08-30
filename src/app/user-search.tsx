@@ -1,31 +1,65 @@
 import { useRouter } from 'expo-router';
 import { Search, UserX } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Keyboard,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PersonRow } from '@/components/content/person-row';
-import { EmptyState, Input, ScreenHeader } from '@/components/design-system';
-import { BrandFonts, Colors, Layout, Spacing, Typography } from '@/constants/theme';
-import { MOCK_SEARCH_PEOPLE } from '@/data/mock';
+import { EmptyState, ErrorState, Input, ScreenHeader } from '@/components/design-system';
+import { Colors, Layout, Spacing } from '@/constants/theme';
+import { useSearchUsers, useToggleFollow } from '@/features/social/queries';
 
 const c = Colors.light;
 
-// 사람 찾기 (S-08 social) — search people by nickname and follow them. Opened from the feed header.
-// Results/follow state are local for the markup phase; wired to /api/users/search + follow later.
+// 사람 찾기 (S-08) — search users by nickname and follow them. Opened from the feed header.
 export default function UserSearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [followOverride, setFollowOverride] = useState<Record<string, boolean>>({});
-  const toggleFollow = (id: string, seed: boolean) =>
-    setFollowOverride((m) => ({ ...m, [id]: !(m[id] ?? seed) }));
+  const [debounced, setDebounced] = useState('');
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const trimmed = query.trim();
-  // Empty query → suggest people the user doesn't follow yet; otherwise filter by nickname.
-  const results = useMemo(() => {
-    if (!trimmed) return MOCK_SEARCH_PEOPLE.filter((p) => !p.following);
-    return MOCK_SEARCH_PEOPLE.filter((p) => p.nickname.includes(trimmed));
-  }, [trimmed]);
+  const search = useSearchUsers(debounced);
+  const toggleFollow = useToggleFollow();
+  // Optimistic follow state by userId (reverted on error).
+  const [followOverride, setFollowOverride] = useState<Record<number, boolean>>({});
+
+  const results = search.data?.pages.flatMap((p) => p.items) ?? [];
+  const showIdle = !debounced;
+  const showLoading = !!debounced && search.isLoading;
+  const showError = !!debounced && search.isError;
+  const showEmpty = !!debounced && !search.isLoading && !search.isError && results.length === 0;
+  const showResults = !!debounced && !search.isLoading && !search.isError && results.length > 0;
+
+  const onChangeQuery = (text: string) => {
+    setQuery(text);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setDebounced(text.trim()), 350);
+  };
+
+  const onToggleFollow = (userId: number, following: boolean) => {
+    setFollowOverride((m) => ({ ...m, [userId]: !following }));
+    toggleFollow.mutate(
+      { userId, following },
+      {
+        onError: () => setFollowOverride((m) => ({ ...m, [userId]: following })),
+        onSuccess: (res) => setFollowOverride((m) => ({ ...m, [userId]: res.following })),
+      },
+    );
+  };
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
+    if (nearBottom && search.hasNextPage && !search.isFetchingNextPage) search.fetchNextPage();
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -34,40 +68,59 @@ export default function UserSearchScreen() {
       <View style={styles.searchWrap}>
         <Input
           value={query}
-          onChangeText={setQuery}
+          onChangeText={onChangeQuery}
           placeholder="닉네임으로 검색"
           autoFocus
           autoCapitalize="none"
+          autoCorrect={false}
           returnKeyType="search"
           onSubmitEditing={Keyboard.dismiss}
           leading={<Search size={18} color={c.textMuted} />}
         />
       </View>
 
-      {results.length === 0 ? (
+      {showIdle ? (
+        <View style={styles.centered}>
+          <EmptyState icon={Search} title="닉네임으로 검색해보세요" description="함께 문장을 나눌 사람을 찾아보세요" />
+        </View>
+      ) : showLoading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={c.primary} />
+        </View>
+      ) : showError ? (
+        <View style={styles.centered}>
+          <ErrorState title="검색하지 못했습니다" description="네트워크를 확인하고 다시 시도해주세요" onRetry={() => search.refetch()} />
+        </View>
+      ) : showEmpty ? (
         <View style={styles.centered}>
           <EmptyState icon={UserX} title="검색 결과가 없어요" description="다른 닉네임으로 찾아보세요" />
         </View>
-      ) : (
+      ) : showResults ? (
         <ScrollView
           contentContainerStyle={styles.body}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          {!trimmed ? <Text style={styles.sectionTitle}>추천</Text> : null}
-          {results.map((p) => {
-            const following = followOverride[p.id] ?? p.following ?? false;
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={200}>
+          {results.map((u) => {
+            const following = followOverride[u.userId] ?? u.isFollowing;
             return (
               <PersonRow
-                key={p.id}
-                nickname={p.nickname}
-                bio={p.bio}
+                key={u.userId}
+                nickname={u.nickname}
+                bio={u.bio}
                 following={following}
-                onToggleFollow={() => toggleFollow(p.id, p.following ?? false)}
+                onToggleFollow={() => onToggleFollow(u.userId, following)}
               />
             );
           })}
+          {search.isFetchingNextPage ? (
+            <View style={styles.footerLoading}>
+              <ActivityIndicator color={c.primary} />
+            </View>
+          ) : null}
         </ScrollView>
-      )}
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -77,10 +130,5 @@ const styles = StyleSheet.create({
   searchWrap: { paddingHorizontal: Layout.gutterScreen, paddingTop: Spacing.two, paddingBottom: Spacing.two },
   centered: { flex: 1, justifyContent: 'center', paddingHorizontal: Spacing.two },
   body: { paddingHorizontal: Layout.gutterScreen, paddingTop: Spacing.one, paddingBottom: Spacing.six },
-  sectionTitle: {
-    ...Typography.meta,
-    fontFamily: BrandFonts.uiSemibold,
-    color: c.textSecondary,
-    marginBottom: Spacing.two,
-  },
+  footerLoading: { paddingVertical: Spacing.four, alignItems: 'center' },
 });
