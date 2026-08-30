@@ -1,8 +1,18 @@
+import { Image } from 'expo-image';
 import type { Href } from 'expo-router';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ellipsis, Plus, Quote } from 'lucide-react-native';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { QuoteCard } from '@/components/content/quote-card';
@@ -10,110 +20,139 @@ import {
   Badge,
   Button,
   EmptyState,
+  ErrorState,
   FloatingButton,
   GalpiText,
   ScreenHeader,
   SkeletonQuoteList,
 } from '@/components/design-system';
 import { BrandFonts, Colors, Layout, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { MOCK_BOOKS, MOCK_QUOTES } from '@/data/mock';
+import { useRemoveBook } from '@/features/bookshelf/queries';
+import { useWorkQuotes } from '@/features/quotes/queries';
 
 const c = Colors.light;
-
-type ScreenState = 'loading' | 'ready';
 
 export default function BookDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  // Markup phase: look up mock data by route id. Real fetch (F-07) arrives in the API pass.
-  const [state] = useState<ScreenState>('ready');
-  const book = MOCK_BOOKS.find((b) => b.id === id);
-  const quotes = MOCK_QUOTES.filter((q) => q.bookId === id);
+  const workId = Number(id);
 
-  const addQuote = () => router.push(`/quote/new?bookId=${id}` as Href); // S-06 route arrives later
+  const q = useWorkQuotes(workId);
+  const removeBook = useRemoveBook();
 
-  if (!book) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScreenHeader title="책" onBack={() => router.back()} />
-        <View style={styles.centered}>
-          <EmptyState icon={Quote} title="책을 찾을 수 없어요" />
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const work = q.data?.pages[0]?.work;
+  const quotes = q.data?.pages.flatMap((p) => p.quotes.items) ?? [];
+
+  const addQuote = () => router.push(`/quote/new?bookId=${workId}` as Href);
+
+  const confirmRemove = () => {
+    Alert.alert('책장에서 빼기', `'${work?.title ?? '이 책'}'을(를) 책장에서 뺄까요?\n담아둔 문장은 유지돼요.`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '빼기',
+        style: 'destructive',
+        onPress: () => removeBook.mutate(workId, { onSuccess: () => router.back() }),
+      },
+    ]);
+  };
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
+    if (nearBottom && q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage();
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader
-        title={book.title}
+        title={work?.title ?? '책'}
         onBack={() => router.back()}
         trailing={
-          <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="더보기">
-            <Ellipsis size={22} color={c.textSecondary} />
-          </Pressable>
+          work ? (
+            <Pressable onPress={confirmRemove} hitSlop={8} accessibilityRole="button" accessibilityLabel="더보기">
+              <Ellipsis size={22} color={c.textSecondary} />
+            </Pressable>
+          ) : undefined
         }
       />
 
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        <View style={styles.bookInfo}>
-          <View style={[styles.cover, { backgroundColor: book.tint ?? c.primarySoft }]}>
-            <Text style={styles.coverTitle} numberOfLines={5}>
-              {book.title}
-            </Text>
-          </View>
-          <View style={styles.bookMeta}>
-            <Text style={styles.title} numberOfLines={3}>
-              {book.title}
-            </Text>
-            <GalpiText variant="metaLg" color={c.textSecondary}>
-              {book.author}
-            </GalpiText>
-            <View style={styles.badgeRow}>
-              <Badge>{`문장 ${quotes.length}개`}</Badge>
+      {q.isPending ? (
+        <View style={styles.body}>
+          <SkeletonQuoteList count={3} />
+        </View>
+      ) : q.isError ? (
+        <View style={styles.centered}>
+          <ErrorState
+            title="책을 불러오지 못했습니다"
+            description="네트워크를 확인하고 다시 시도해주세요"
+            onRetry={() => q.refetch()}
+          />
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={200}>
+          <View style={styles.bookInfo}>
+            <View style={styles.cover}>
+              {work?.coverUrl ? (
+                <Image source={{ uri: work.coverUrl }} style={styles.coverImage} contentFit="cover" />
+              ) : (
+                <Text style={styles.coverTitle} numberOfLines={5}>
+                  {work?.title}
+                </Text>
+              )}
+            </View>
+            <View style={styles.bookMeta}>
+              <Text style={styles.title} numberOfLines={3}>
+                {work?.title}
+              </Text>
+              {work?.author ? (
+                <GalpiText variant="metaLg" color={c.textSecondary}>
+                  {work.author}
+                </GalpiText>
+              ) : null}
+              <View style={styles.badgeRow}>
+                <Badge>{`문장 ${quotes.length}${q.hasNextPage ? '+' : ''}개`}</Badge>
+              </View>
             </View>
           </View>
-        </View>
 
-        <Text style={styles.sectionTitle}>이 책의 문장</Text>
+          <Text style={styles.sectionTitle}>이 책의 문장</Text>
 
-        {state === 'loading' ? <SkeletonQuoteList count={3} /> : null}
-
-        {state === 'ready' && quotes.length === 0 ? (
-          <View style={styles.emptyWrap}>
-            <EmptyState
-              icon={Quote}
-              title="아직 이 책에 담은 문장이 없어요"
-              description="마음에 남은 문장을 옮겨두세요"
-              action={
-                <Button
-                  label="문장 추가"
-                  onPress={addQuote}
-                  iconLeft={<Plus size={18} color={c.textOnPrimary} />}
-                />
-              }
-            />
-          </View>
-        ) : null}
-
-        {state === 'ready' && quotes.length > 0 ? (
-          <View style={styles.quoteList}>
-            {quotes.map((q) => (
-              <QuoteCard
-                key={q.id}
-                characterName={q.characterName}
-                content={q.content}
-                hasSchedule={q.hasSchedule}
-                hasMemo={!!q.memo}
-                onPress={() => router.push(`/quote/${q.id}` as Href)}
+          {quotes.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <EmptyState
+                icon={Quote}
+                title="아직 이 책에 담은 문장이 없어요"
+                description="마음에 남은 문장을 옮겨두세요"
+                action={<Button label="문장 추가" onPress={addQuote} iconLeft={<Plus size={18} color={c.textOnPrimary} />} />}
               />
-            ))}
-          </View>
-        ) : null}
-      </ScrollView>
+            </View>
+          ) : (
+            <View style={styles.quoteList}>
+              {quotes.map((quote) => (
+                <QuoteCard
+                  key={quote.quoteId}
+                  characterName={quote.characterName}
+                  content={quote.content}
+                  hasSchedule={quote.hasSchedule}
+                  hasMemo={!!quote.memo}
+                  onPress={() => router.push(`/quote/${quote.quoteId}` as Href)}
+                />
+              ))}
+              {q.isFetchingNextPage ? (
+                <View style={styles.footerLoading}>
+                  <ActivityIndicator color={c.primary} />
+                </View>
+              ) : null}
+            </View>
+          )}
+        </ScrollView>
+      )}
 
-      {/* FAB only when the list has content — the empty state already offers its own 문장 추가. */}
-      {state === 'ready' && quotes.length > 0 ? (
+      {!q.isPending && !q.isError && quotes.length > 0 ? (
         <FloatingButton label="문장 추가" onPress={addQuote} />
       ) : null}
     </SafeAreaView>
@@ -133,14 +172,17 @@ const styles = StyleSheet.create({
     width: 96,
     aspectRatio: 2 / 3,
     borderRadius: Radius.cover,
+    backgroundColor: c.primarySoft,
     borderWidth: 1,
     borderColor: c.border,
     borderLeftWidth: 5,
     borderLeftColor: '#C7A98F',
     justifyContent: 'center',
     paddingHorizontal: 8,
+    overflow: 'hidden',
     ...(Shadows.md as object),
   },
+  coverImage: { width: '100%', height: '100%' },
   coverTitle: { fontFamily: BrandFonts.quote, fontSize: 13, lineHeight: 18, color: c.primaryHover },
   bookMeta: { flex: 1, minWidth: 0, gap: 6, paddingTop: 2 },
   title: { fontFamily: BrandFonts.uiBold, fontSize: 20, lineHeight: 26, color: c.textPrimary },
@@ -153,4 +195,5 @@ const styles = StyleSheet.create({
   },
   emptyWrap: { paddingTop: Spacing.four },
   quoteList: { gap: Spacing.three },
+  footerLoading: { paddingVertical: Spacing.four, alignItems: 'center' },
 });
