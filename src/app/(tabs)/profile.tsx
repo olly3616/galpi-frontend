@@ -106,6 +106,13 @@ export default function ProfileScreen() {
           <Card style={styles.settingsCard}>
             <Pressable
               style={styles.linkRow}
+              onPress={() => router.push('/schedules' as Href)}
+              accessibilityRole="button">
+              <GalpiText variant="body">내 알림</GalpiText>
+              <ChevronRight size={16} color={c.textMuted} />
+            </Pressable>
+            <Pressable
+              style={styles.linkRow}
               onPress={() => router.push('/notification-settings' as Href)}
               accessibilityRole="button">
               <GalpiText variant="body">알림 설정</GalpiText>

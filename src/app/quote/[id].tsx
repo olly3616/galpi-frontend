@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
-import { Bell, ChevronDown, ChevronUp, Ellipsis, StickyNote } from 'lucide-react-native';
+import { Bell, ChevronDown, ChevronUp, Ellipsis, StickyNote, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,18 +20,24 @@ import {
 import { BrandFonts, Colors, Layout, Spacing, Typography } from '@/constants/theme';
 import type { ScheduleSummary } from '@/features/quotes/api';
 import { useDeleteQuote, useQuoteDetail } from '@/features/quotes/queries';
+import { useCreateSchedule, useDeleteSchedule, useUpdateSchedule } from '@/features/schedules/queries';
 
 const c = Colors.light;
 
 type RepeatType = 'daily' | 'weekly' | 'once';
-type Alarm = { time: string; repeat: string };
 
-// Format a server schedule into the compact "time · repeat" display used in the alarm list.
+const DAY_ORDER: Weekday[] = ['월', '화', '수', '목', '금', '토', '일'];
+const DAY_TO_API: Record<Weekday, string> = { 월: 'MON', 화: 'TUE', 수: 'WED', 목: 'THU', 금: 'FRI', 토: 'SAT', 일: 'SUN' };
+const daysToApi = (days: Weekday[]) => DAY_ORDER.filter((d) => days.includes(d)).map((d) => DAY_TO_API[d]).join(',');
+
+// Format a server schedule into the compact "repeat" label shown next to its time.
 function scheduleLabel(s: ScheduleSummary): string {
   if (s.repeatType === 'DAILY') return '매일';
   if (s.repeatType === 'WEEKLY') return s.daysOfWeek?.split(',').join('·') ?? '매주';
   return '한 번';
 }
+
+const REPEAT_TO_API = { daily: 'DAILY', weekly: 'WEEKLY', once: 'ONCE' } as const;
 
 export default function QuoteDetailScreen() {
   const router = useRouter();
@@ -43,22 +49,17 @@ export default function QuoteDetailScreen() {
   const quote = detail.data;
   const book = quote?.work;
 
-  // Alarm editor is still local markup — real schedule CRUD lands in the 알림(schedules) branch.
-  // The list below is seeded from the quote's real schedules for display.
-  const [alarms, setAlarms] = useState<Alarm[]>([]);
-  const [seededId, setSeededId] = useState<number | null>(null);
+  const createSchedule = useCreateSchedule(quoteId, book?.workId);
+  const updateSchedule = useUpdateSchedule(quoteId, book?.workId);
+  const removeSchedule = useDeleteSchedule(quoteId, book?.workId);
+
+  // Alarm editor state (the schedule list itself is the quote's real `schedules`).
   const [hour, setHour] = useState('07');
   const [minute, setMinute] = useState('30');
   const [repeat, setRepeat] = useState<RepeatType>('daily');
   const [days, setDays] = useState<Weekday[]>(['월', '수', '금']);
   const [onceDate, setOnceDate] = useState(() => new Date());
-  const [on, setOn] = useState(true);
-
-  // Seed the alarm list from the loaded quote once (React's "adjust state during render" pattern).
-  if (quote && seededId !== quote.quoteId) {
-    setSeededId(quote.quoteId);
-    setAlarms(quote.schedules.map((s) => ({ time: s.sendTime, repeat: scheduleLabel(s) })));
-  }
+  const [alarmError, setAlarmError] = useState('');
 
   const goEdit = () => router.push(`/quote/new?quoteId=${quoteId}` as Href);
   const confirmDelete = () => {
@@ -80,14 +81,28 @@ export default function QuoteDetailScreen() {
   };
 
   const saveAlarm = () => {
-    const repeatText =
-      repeat === 'daily'
-        ? '매일'
-        : repeat === 'weekly'
-          ? days.join('·')
-          : `${onceDate.getMonth() + 1}월 ${onceDate.getDate()}일`;
-    setAlarms((prev) => [...prev, { time: `${hour}:${minute}`, repeat: repeatText }]);
+    if (createSchedule.isPending) return;
+    if (repeat === 'weekly' && days.length === 0) {
+      setAlarmError('요일을 하나 이상 선택해주세요.');
+      return;
+    }
+    setAlarmError('');
+    // NOTE: the API has no date field for ONCE, so onceDate isn't sent — see the reported gap.
+    createSchedule.mutate({
+      sendTime: `${hour}:${minute}`,
+      repeatType: REPEAT_TO_API[repeat],
+      daysOfWeek: repeat === 'weekly' ? daysToApi(days) : undefined,
+    });
   };
+
+  const toggleActive = (s: ScheduleSummary) =>
+    updateSchedule.mutate({ scheduleId: s.scheduleId, patch: { isActive: !s.isActive } });
+
+  const confirmDeleteSchedule = (s: ScheduleSummary) =>
+    Alert.alert('알림 삭제', '이 알림을 삭제할까요?', [
+      { text: '취소', style: 'cancel' },
+      { text: '삭제', style: 'destructive', onPress: () => removeSchedule.mutate(s.scheduleId) },
+    ]);
 
   if (detail.isPending) {
     return (
@@ -158,10 +173,10 @@ export default function QuoteDetailScreen() {
           </Card>
         ) : null}
 
-        {/* Alarm setting — the highlight (editor persistence arrives in the schedules branch) */}
+        {/* Alarm setting — the highlight */}
         <View>
           <Text style={styles.sectionTitle}>이 문장을 언제 만날까요?</Text>
-          {alarms.length === 0 ? (
+          {quote.schedules.length === 0 ? (
             <GalpiText variant="metaLg" color={c.textSecondary} style={styles.alarmHint}>
               알림을 설정하면 이 문장을 다시 만날 수 있어요
             </GalpiText>
@@ -185,22 +200,43 @@ export default function QuoteDetailScreen() {
             />
 
             {repeat === 'weekly' ? <WeekdayPicker value={days} onChange={setDays} /> : null}
-            {repeat === 'once' ? <Calendar value={onceDate} onChange={setOnceDate} /> : null}
+            {repeat === 'once' ? (
+              <View style={styles.onceBlock}>
+                <Calendar value={onceDate} onChange={setOnceDate} />
+                <GalpiText variant="meta" color={c.textMuted}>
+                  현재는 날짜 저장이 지원되지 않아 시간만 예약돼요
+                </GalpiText>
+              </View>
+            ) : null}
 
-            <Switch label="알림 켜기" checked={on} onChange={setOn} />
+            {alarmError ? (
+              <GalpiText variant="meta" color={c.error}>
+                {alarmError}
+              </GalpiText>
+            ) : null}
 
-            <Button label="알림 저장" fullWidth onPress={saveAlarm} />
+            <Button label="알림 저장" fullWidth loading={createSchedule.isPending} onPress={saveAlarm} />
           </Card>
 
-          {alarms.length > 0 ? (
+          {quote.schedules.length > 0 ? (
             <View style={styles.alarmList}>
-              {alarms.map((a, i) => (
-                <View key={i} style={styles.alarmItem}>
-                  <Bell size={16} color={c.accentStrong} />
-                  <Text style={styles.alarmTime}>{a.time}</Text>
-                  <GalpiText variant="meta" color={c.textSecondary}>
-                    {a.repeat}
-                  </GalpiText>
+              {quote.schedules.map((s) => (
+                <View key={s.scheduleId} style={styles.alarmItem}>
+                  <Bell size={16} color={s.isActive ? c.accentStrong : c.textMuted} />
+                  <View style={styles.alarmTextCol}>
+                    <Text style={[styles.alarmTime, !s.isActive && styles.alarmTimeOff]}>{s.sendTime}</Text>
+                    <GalpiText variant="meta" color={c.textSecondary}>
+                      {scheduleLabel(s)}
+                    </GalpiText>
+                  </View>
+                  <Switch checked={s.isActive} onChange={() => toggleActive(s)} />
+                  <Pressable
+                    onPress={() => confirmDeleteSchedule(s)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="알림 삭제">
+                    <Trash2 size={18} color={c.textMuted} />
+                  </Pressable>
                 </View>
               ))}
             </View>
@@ -300,6 +336,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   colon: { fontFamily: BrandFonts.ui, fontSize: 26, color: c.textMuted },
+  onceBlock: { gap: Spacing.two },
   alarmList: { marginTop: Spacing.three, gap: Spacing.two },
   alarmItem: {
     flexDirection: 'row',
@@ -312,5 +349,7 @@ const styles = StyleSheet.create({
     borderColor: c.border,
     borderRadius: 12,
   },
+  alarmTextCol: { flex: 1 },
   alarmTime: { ...Typography.bodySm, fontFamily: BrandFonts.uiMedium, color: c.textPrimary },
+  alarmTimeOff: { color: c.textMuted },
 });
