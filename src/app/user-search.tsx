@@ -1,3 +1,4 @@
+import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { Search, UserX } from 'lucide-react-native';
 import { useRef, useState } from 'react';
@@ -109,8 +110,10 @@ export default function UserSearchScreen() {
                 key={u.userId}
                 nickname={u.nickname}
                 bio={u.bio}
+                avatarUrl={u.profileImageUrl}
                 following={following}
                 onToggleFollow={() => onToggleFollow(u.userId, following)}
+                onPress={() => router.push(`/user/${u.userId}` as Href)}
               />
             );
           })}

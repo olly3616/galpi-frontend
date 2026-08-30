@@ -1,3 +1,4 @@
+import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { UserPlus, Users } from 'lucide-react-native';
 import { ActivityIndicator, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -75,6 +76,7 @@ export default function FeedScreen() {
               likeCount={item.likeCount}
               liked={item.isLiked}
               onToggleLike={() => toggleLike.mutate({ quoteId: item.quoteId, liked: item.isLiked })}
+              onPressAuthor={() => router.push(`/user/${item.author.userId}` as Href)}
             />
           ))}
           {feed.isFetchingNextPage ? (
