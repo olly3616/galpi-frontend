@@ -22,6 +22,7 @@ export function FeedCard({
   likeCount,
   liked = false,
   onToggleLike,
+  onPressAuthor,
 }: {
   nickname: string;
   timeAgo?: string;
@@ -32,10 +33,11 @@ export function FeedCard({
   likeCount: number;
   liked?: boolean;
   onToggleLike?: () => void;
+  onPressAuthor?: () => void;
 }) {
   return (
     <View style={styles.card}>
-      <View style={styles.author}>
+      <Pressable style={styles.author} onPress={onPressAuthor} accessibilityRole={onPressAuthor ? 'button' : undefined}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{nickname.slice(0, 1)}</Text>
         </View>
@@ -43,7 +45,7 @@ export function FeedCard({
           {nickname}
         </Text>
         {timeAgo ? <Text style={styles.time}>· {timeAgo}</Text> : null}
-      </View>
+      </Pressable>
 
       <View style={styles.body}>
         <View style={styles.rule} />
