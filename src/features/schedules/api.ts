@@ -1,8 +1,19 @@
 import type { ScheduleSummary } from '@/features/quotes/api';
 import { api } from '@/lib/api/client';
+import type { PageResponse } from '@/lib/api/pagination';
 
 /** A schedule shares the quote-detail schedule shape. */
 export type Schedule = ScheduleSummary;
+
+/** A schedule with its owning quote (내 알림 목록, GET /api/schedules/me). */
+export type ScheduleWithQuote = Schedule & {
+  quote: {
+    quoteId: number;
+    content: string;
+    characterName?: string;
+    work: { workId: number; title: string; author?: string; coverUrl?: string | null };
+  };
+};
 
 export type RepeatType = 'DAILY' | 'WEEKLY' | 'ONCE';
 
@@ -18,6 +29,11 @@ export type UpdateScheduleInput = {
   daysOfWeek?: string;
   isActive?: boolean;
 };
+
+export async function getMySchedules(page = 0, size = 20): Promise<PageResponse<ScheduleWithQuote>> {
+  const res = await api.get<PageResponse<ScheduleWithQuote>>('/api/schedules/me', { params: { page, size } });
+  return res.data;
+}
 
 export async function createSchedule(quoteId: number, input: CreateScheduleInput): Promise<Schedule> {
   const res = await api.post<Schedule>(`/api/quotes/${quoteId}/schedules`, input);
