@@ -1,8 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 
+import { queryClient } from '@/lib/api/query-client';
 import { useAuthStore } from '@/stores/auth-store';
 
-import { login, signup, type AuthResult } from './api';
+import { login, logout, signup, type AuthResult } from './api';
 
 /** Shape the login/signup response into the auth store's session payload. */
 function toSession(data: AuthResult) {
@@ -28,5 +29,29 @@ export function useSignup() {
   return useMutation({
     mutationFn: signup,
     onSuccess: (data) => setSession(toSession(data)),
+  });
+}
+
+/**
+ * Log out: revoke the refresh token server-side (best-effort), then clear the local session
+ * and cached server data regardless of the network result.
+ */
+export function useLogout() {
+  const clearSession = useAuthStore((s) => s.clearSession);
+  return useMutation({
+    mutationFn: async () => {
+      const refreshToken = useAuthStore.getState().refreshToken;
+      if (refreshToken) {
+        try {
+          await logout(refreshToken);
+        } catch {
+          // best-effort revoke — still clear locally below
+        }
+      }
+    },
+    onSettled: async () => {
+      await clearSession();
+      queryClient.clear();
+    },
   });
 }

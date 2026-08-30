@@ -23,6 +23,11 @@ export async function signup(input: SignupInput): Promise<AuthResult> {
   return res.data;
 }
 
+/** Revoke a refresh token server-side (idempotent). Called on logout. */
+export async function logout(refreshToken: string): Promise<void> {
+  await api.post('/api/auth/logout', { refreshToken });
+}
+
 /** Map an auth error to a Korean, user-facing message by its API error code. */
 export function authErrorMessage(error: unknown): string {
   const code = error instanceof ApiError ? error.code : 'UNKNOWN';
