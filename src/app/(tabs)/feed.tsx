@@ -1,25 +1,28 @@
 import { useRouter } from 'expo-router';
 import { UserPlus, Users } from 'lucide-react-native';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FeedCard } from '@/components/content/feed-card';
-import { EmptyState, GalpiText } from '@/components/design-system';
+import { EmptyState, ErrorState, GalpiText } from '@/components/design-system';
 import { Colors, Layout, Spacing } from '@/constants/theme';
-import { MOCK_FEED } from '@/data/mock';
+import { useFeed, useToggleFeedLike } from '@/features/social/queries';
 
 const c = Colors.light;
 
-// 팔로잉 피드 (S-08): 문장 shared by people the user follows. Every card shows its source work.
-// Like state is local for the markup phase; wired to /api/quotes/{id}/like in the API pass.
+// 팔로잉 피드 (S-08): FOLLOWERS-public quotes from people the user follows, newest first.
 export default function FeedScreen() {
   const router = useRouter();
-  const [likedOverride, setLikedOverride] = useState<Record<string, boolean>>({});
-  const toggleLike = (id: string) =>
-    setLikedOverride((m) => ({ ...m, [id]: !(m[id] ?? MOCK_FEED.find((f) => f.id === id)?.likedByMe ?? false) }));
+  const feed = useFeed();
+  const toggleLike = useToggleFeedLike();
 
-  const isEmpty = MOCK_FEED.length === 0;
+  const items = feed.data?.pages.flatMap((p) => p.items) ?? [];
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
+    if (nearBottom && feed.hasNextPage && !feed.isFetchingNextPage) feed.fetchNextPage();
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -35,7 +38,19 @@ export default function FeedScreen() {
         </Pressable>
       </View>
 
-      {isEmpty ? (
+      {feed.isPending ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={c.primary} />
+        </View>
+      ) : feed.isError ? (
+        <View style={styles.centered}>
+          <ErrorState
+            title="피드를 불러오지 못했습니다"
+            description="네트워크를 확인하고 다시 시도해주세요"
+            onRetry={() => feed.refetch()}
+          />
+        </View>
+      ) : items.length === 0 ? (
         <View style={styles.centered}>
           <EmptyState
             icon={Users}
@@ -44,27 +59,29 @@ export default function FeedScreen() {
           />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-          {MOCK_FEED.map((item) => {
-            const liked = likedOverride[item.id] ?? item.likedByMe ?? false;
-            // Adjust the seed count by whether the user's like differs from the seed state.
-            const base = item.likeCount - (item.likedByMe ? 1 : 0);
-            const likeCount = base + (liked ? 1 : 0);
-            return (
-              <FeedCard
-                key={item.id}
-                nickname={item.nickname}
-                timeAgo={item.timeAgo}
-                characterName={item.characterName}
-                content={item.content}
-                bookTitle={item.bookTitle}
-                bookAuthor={item.bookAuthor}
-                likeCount={likeCount}
-                liked={liked}
-                onToggleLike={() => toggleLike(item.id)}
-              />
-            );
-          })}
+        <ScrollView
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={200}>
+          {items.map((item) => (
+            <FeedCard
+              key={item.quoteId}
+              nickname={item.author.nickname}
+              characterName={item.characterName}
+              content={item.content}
+              bookTitle={item.work.title}
+              bookAuthor={item.work.author ?? ''}
+              likeCount={item.likeCount}
+              liked={item.isLiked}
+              onToggleLike={() => toggleLike.mutate({ quoteId: item.quoteId, liked: item.isLiked })}
+            />
+          ))}
+          {feed.isFetchingNextPage ? (
+            <View style={styles.footerLoading}>
+              <ActivityIndicator color={c.primary} />
+            </View>
+          ) : null}
         </ScrollView>
       )}
     </SafeAreaView>
@@ -89,4 +106,5 @@ const styles = StyleSheet.create({
     paddingBottom: Layout.tabBarHeight + Spacing.six,
     gap: Spacing.three,
   },
+  footerLoading: { paddingVertical: Spacing.four, alignItems: 'center' },
 });

@@ -24,7 +24,7 @@ export function FeedCard({
   onToggleLike,
 }: {
   nickname: string;
-  timeAgo: string;
+  timeAgo?: string;
   characterName?: string;
   content: string;
   bookTitle: string;
@@ -42,7 +42,7 @@ export function FeedCard({
         <Text style={styles.nickname} numberOfLines={1}>
           {nickname}
         </Text>
-        <Text style={styles.time}>· {timeAgo}</Text>
+        {timeAgo ? <Text style={styles.time}>· {timeAgo}</Text> : null}
       </View>
 
       <View style={styles.body}>
