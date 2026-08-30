@@ -6,6 +6,8 @@ import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +21,7 @@ import { BookRow } from '@/components/content/book-row';
 import {
   Button,
   EmptyState,
+  ErrorState,
   GalpiText,
   Input,
   RadioGroup,
@@ -26,42 +29,70 @@ import {
   Segmented,
 } from '@/components/design-system';
 import { Colors, Layout, Radius, Spacing, Typography } from '@/constants/theme';
-import { MOCK_SEARCH_RESULTS } from '@/data/mock';
+import type { BookSearchItem } from '@/features/bookshelf/api';
+import { useAddBook, useSearchBooks } from '@/features/bookshelf/queries';
+import { ApiError } from '@/lib/api/errors';
 
 const c = Colors.light;
 
 type Tab = 'search' | 'manual';
-type SearchPhase = 'idle' | 'loading' | 'results' | 'empty';
 type WorkType = 'novel' | 'webnovel';
+
+const itemKey = (b: BookSearchItem) => b.isbn ?? `${b.title}|${b.author ?? ''}`;
 
 export default function AddBookScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('search');
 
-  // --- Search tab (markup: filters mock results; a query with "웹" returns none) ---
+  // --- Search tab ---
   const [query, setQuery] = useState('');
-  const [phase, setPhase] = useState<SearchPhase>('idle');
-  const [results, setResults] = useState(MOCK_SEARCH_RESULTS);
-  const [addedIds, setAddedIds] = useState<string[]>([]);
+  const [debounced, setDebounced] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const search = useSearchBooks(debounced);
+  const addFromSearch = useAddBook();
+  const [addedKeys, setAddedKeys] = useState<Set<string>>(new Set());
+  const markAdded = (key: string) => setAddedKeys((prev) => new Set(prev).add(key));
 
-  const runSearch = (text: string) => {
+  const results = search.data?.pages.flatMap((p) => p.items) ?? [];
+  const showIdle = !debounced;
+  const showLoading = !!debounced && search.isLoading;
+  const showError = !!debounced && search.isError;
+  const showEmpty = !!debounced && !search.isLoading && !search.isError && results.length === 0;
+  const showResults = !!debounced && !search.isLoading && !search.isError && results.length > 0;
+
+  const onChangeQuery = (text: string) => {
     setQuery(text);
     if (timer.current) clearTimeout(timer.current);
-    if (!text.trim()) {
-      setPhase('idle');
-      return;
-    }
-    setPhase('loading');
-    timer.current = setTimeout(() => {
-      const hit = text.includes('웹')
-        ? []
-        : MOCK_SEARCH_RESULTS.filter(
-            (r) => r.title.includes(text) || r.author.includes(text),
-          );
-      setResults(hit);
-      setPhase(hit.length ? 'results' : 'empty');
-    }, 350);
+    timer.current = setTimeout(() => setDebounced(text.trim()), 350);
+  };
+
+  const onAddSearch = (b: BookSearchItem) => {
+    const key = itemKey(b);
+    addFromSearch.mutate(
+      {
+        source: 'API',
+        type: 'NOVEL',
+        title: b.title,
+        author: b.author,
+        publisher: b.publisher,
+        coverUrl: b.coverUrl ?? undefined,
+        isbn: b.isbn,
+      },
+      {
+        onSuccess: () => markAdded(key),
+        // Already-in-shelf isn't a real failure here — just reflect it as added.
+        onError: (err) => {
+          if (err instanceof ApiError && err.code === 'ALREADY_IN_SHELF') markAdded(key);
+        },
+      },
+    );
+  };
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (tab !== 'search') return;
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
+    if (nearBottom && search.hasNextPage && !search.isFetchingNextPage) search.fetchNextPage();
   };
 
   // --- Manual tab ---
@@ -69,8 +100,11 @@ export default function AddBookScreen() {
   const [author, setAuthor] = useState('');
   const [workType, setWorkType] = useState<WorkType>('novel');
   const [coverUri, setCoverUri] = useState<string | null>(null);
+  const [manualError, setManualError] = useState('');
+  const addManual = useAddBook();
 
-  // Markup phase: pick + preview locally only. Uploading to the server is wired with F-05.
+  // Cover is a local preview only — there is no image-upload endpoint yet, so a manual book is
+  // registered without a coverUrl (the shelf renders a title-based fallback cover).
   const pickCover = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -81,6 +115,28 @@ export default function AddBookScreen() {
     if (!result.canceled) setCoverUri(result.assets[0].uri);
   };
 
+  const submitManual = () => {
+    if (!title.trim() || addManual.isPending) return;
+    setManualError('');
+    addManual.mutate(
+      {
+        source: 'MANUAL',
+        type: workType === 'novel' ? 'NOVEL' : 'WEBNOVEL',
+        title: title.trim(),
+        author: author.trim() || undefined,
+      },
+      {
+        onSuccess: () => router.back(),
+        onError: (err) =>
+          setManualError(
+            err instanceof ApiError && err.code === 'ALREADY_IN_SHELF'
+              ? '이미 책장에 있는 책이에요.'
+              : '등록하지 못했어요. 다시 시도해주세요.',
+          ),
+      },
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScreenHeader title="책 추가" onBack={() => router.back()} />
@@ -88,7 +144,9 @@ export default function AddBookScreen() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={200}>
           <Segmented
             options={[
               { id: 'search', label: '검색으로 추가' },
@@ -102,7 +160,7 @@ export default function AddBookScreen() {
             <View style={styles.section}>
               <Input
                 value={query}
-                onChangeText={runSearch}
+                onChangeText={onChangeQuery}
                 placeholder="책 제목이나 작가를 검색해보세요"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -110,7 +168,7 @@ export default function AddBookScreen() {
                 leading={<Search size={18} color={c.textSecondary} />}
               />
 
-              {phase === 'idle' ? (
+              {showIdle ? (
                 <EmptyState
                   icon={Search}
                   title="책 제목을 검색해보세요"
@@ -118,35 +176,46 @@ export default function AddBookScreen() {
                 />
               ) : null}
 
-              {phase === 'loading' ? (
+              {showLoading ? (
                 <View style={styles.loading}>
                   <ActivityIndicator color={c.primary} />
                 </View>
               ) : null}
 
-              {phase === 'empty' ? (
+              {showError ? (
+                <ErrorState
+                  title="검색하지 못했습니다"
+                  description="네트워크를 확인하고 다시 시도해주세요"
+                  onRetry={() => search.refetch()}
+                />
+              ) : null}
+
+              {showEmpty ? (
                 <EmptyState
                   icon={BookOpen}
                   title="검색 결과가 없어요"
                   description="웹소설이라면 직접 등록해보세요"
-                  action={
-                    <Button label="직접 등록하기" variant="secondary" onPress={() => setTab('manual')} />
-                  }
+                  action={<Button label="직접 등록하기" variant="secondary" onPress={() => setTab('manual')} />}
                 />
               ) : null}
 
-              {phase === 'results' ? (
+              {showResults ? (
                 <View>
-                  {results.map((r) => (
+                  {results.map((b, i) => (
                     <BookRow
-                      key={r.id}
-                      title={r.title}
-                      author={[r.author, r.publisher].filter(Boolean).join(' · ')}
-                      coverUrl={r.coverUrl}
-                      added={r.inShelf || addedIds.includes(r.id)}
-                      onAdd={() => setAddedIds((prev) => [...prev, r.id])}
+                      key={`${itemKey(b)}-${i}`}
+                      title={b.title}
+                      author={[b.author, b.publisher].filter(Boolean).join(' · ')}
+                      coverUrl={b.coverUrl}
+                      added={addedKeys.has(itemKey(b))}
+                      onAdd={() => onAddSearch(b)}
                     />
                   ))}
+                  {search.isFetchingNextPage ? (
+                    <View style={styles.loading}>
+                      <ActivityIndicator color={c.primary} />
+                    </View>
+                  ) : null}
                 </View>
               ) : null}
             </View>
@@ -203,12 +272,20 @@ export default function AddBookScreen() {
                   </Pressable>
                 )}
               </View>
+
+              {manualError ? (
+                <GalpiText variant="metaLg" color={c.error}>
+                  {manualError}
+                </GalpiText>
+              ) : null}
+
               <Button
                 label="등록"
                 size="lg"
                 fullWidth
                 disabled={!title.trim()}
-                onPress={() => router.back()}
+                loading={addManual.isPending}
+                onPress={submitManual}
               />
             </View>
           )}
