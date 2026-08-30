@@ -39,6 +39,9 @@ function scheduleLabel(s: ScheduleSummary): string {
 
 const REPEAT_TO_API = { daily: 'DAILY', weekly: 'WEEKLY', once: 'ONCE' } as const;
 
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const toDateStr = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
 export default function QuoteDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -87,11 +90,11 @@ export default function QuoteDetailScreen() {
       return;
     }
     setAlarmError('');
-    // NOTE: the API has no date field for ONCE, so onceDate isn't sent — see the reported gap.
     createSchedule.mutate({
       sendTime: `${hour}:${minute}`,
       repeatType: REPEAT_TO_API[repeat],
       daysOfWeek: repeat === 'weekly' ? daysToApi(days) : undefined,
+      sendDate: repeat === 'once' ? toDateStr(onceDate) : undefined,
     });
   };
 
@@ -200,14 +203,7 @@ export default function QuoteDetailScreen() {
             />
 
             {repeat === 'weekly' ? <WeekdayPicker value={days} onChange={setDays} /> : null}
-            {repeat === 'once' ? (
-              <View style={styles.onceBlock}>
-                <Calendar value={onceDate} onChange={setOnceDate} />
-                <GalpiText variant="meta" color={c.textMuted}>
-                  현재는 날짜 저장이 지원되지 않아 시간만 예약돼요
-                </GalpiText>
-              </View>
-            ) : null}
+            {repeat === 'once' ? <Calendar value={onceDate} onChange={setOnceDate} /> : null}
 
             {alarmError ? (
               <GalpiText variant="meta" color={c.error}>
@@ -336,7 +332,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   colon: { fontFamily: BrandFonts.ui, fontSize: 26, color: c.textMuted },
-  onceBlock: { gap: Spacing.two },
   alarmList: { marginTop: Spacing.three, gap: Spacing.two },
   alarmItem: {
     flexDirection: 'row',

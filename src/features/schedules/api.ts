@@ -21,12 +21,14 @@ export type CreateScheduleInput = {
   sendTime: string; // "HH:mm"
   repeatType: RepeatType;
   daysOfWeek?: string; // "MON,WED,FRI" — required when WEEKLY
+  sendDate?: string; // "YYYY-MM-DD" — required when ONCE
 };
 
 export type UpdateScheduleInput = {
   sendTime?: string;
   repeatType?: RepeatType;
   daysOfWeek?: string;
+  sendDate?: string;
   isActive?: boolean;
 };
 
