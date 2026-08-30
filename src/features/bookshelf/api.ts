@@ -22,7 +22,6 @@ export type BookshelfItem = {
 export type AddBookInput = {
   source: 'API' | 'MANUAL';
   title: string;
-  type: 'NOVEL' | 'WEBNOVEL';
   author?: string;
   publisher?: string;
   coverUrl?: string;

@@ -24,7 +24,6 @@ import {
   ErrorState,
   GalpiText,
   Input,
-  RadioGroup,
   ScreenHeader,
   Segmented,
 } from '@/components/design-system';
@@ -36,7 +35,6 @@ import { ApiError } from '@/lib/api/errors';
 const c = Colors.light;
 
 type Tab = 'search' | 'manual';
-type WorkType = 'novel' | 'webnovel';
 
 const itemKey = (b: BookSearchItem) => b.isbn ?? `${b.title}|${b.author ?? ''}`;
 
@@ -71,7 +69,6 @@ export default function AddBookScreen() {
     addFromSearch.mutate(
       {
         source: 'API',
-        type: 'NOVEL',
         title: b.title,
         author: b.author,
         publisher: b.publisher,
@@ -98,7 +95,6 @@ export default function AddBookScreen() {
   // --- Manual tab ---
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
-  const [workType, setWorkType] = useState<WorkType>('novel');
   const [coverUri, setCoverUri] = useState<string | null>(null);
   const [manualError, setManualError] = useState('');
   const addManual = useAddBook();
@@ -121,7 +117,6 @@ export default function AddBookScreen() {
     addManual.mutate(
       {
         source: 'MANUAL',
-        type: workType === 'novel' ? 'NOVEL' : 'WEBNOVEL',
         title: title.trim(),
         author: author.trim() || undefined,
       },
@@ -194,7 +189,7 @@ export default function AddBookScreen() {
                 <EmptyState
                   icon={BookOpen}
                   title="검색 결과가 없어요"
-                  description="웹소설이라면 직접 등록해보세요"
+                  description="찾는 책이 없다면 직접 등록해보세요"
                   action={<Button label="직접 등록하기" variant="secondary" onPress={() => setTab('manual')} />}
                 />
               ) : null}
@@ -223,15 +218,6 @@ export default function AddBookScreen() {
             <View style={styles.section}>
               <Input label="제목" value={title} onChangeText={setTitle} placeholder="필수" />
               <Input label="작가" value={author} onChangeText={setAuthor} placeholder="선택" />
-              <RadioGroup
-                label="유형"
-                options={[
-                  { id: 'novel', label: '소설' },
-                  { id: 'webnovel', label: '웹소설' },
-                ]}
-                value={workType}
-                onChange={setWorkType}
-              />
               <View>
                 <Text style={styles.coverLabel}>표지 이미지</Text>
                 {coverUri ? (
