@@ -2,17 +2,7 @@ import { Image } from 'expo-image';
 import type { Href } from 'expo-router';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ellipsis, Plus, Quote } from 'lucide-react-native';
-import {
-  ActivityIndicator,
-  Alert,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { QuoteCard } from '@/components/content/quote-card';
@@ -56,10 +46,8 @@ export default function BookDetailScreen() {
     ]);
   };
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
-    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
-    if (nearBottom && q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage();
+  const loadMore = () => {
+    if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage();
   };
 
   return (
@@ -89,39 +77,54 @@ export default function BookDetailScreen() {
           />
         </View>
       ) : (
-        <ScrollView
+        <FlatList
+          data={quotes}
+          keyExtractor={(quote) => String(quote.quoteId)}
+          renderItem={({ item: quote }) => (
+            <QuoteCard
+              characterName={quote.characterName}
+              content={quote.content}
+              hasSchedule={quote.hasSchedule}
+              hasMemo={!!quote.memo}
+              onPress={() => router.push(`/quote/${quote.quoteId}` as Href)}
+            />
+          )}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
           contentContainerStyle={styles.body}
           showsVerticalScrollIndicator={false}
-          onScroll={onScroll}
-          scrollEventThrottle={200}>
-          <View style={styles.bookInfo}>
-            <View style={styles.cover}>
-              {work?.coverUrl ? (
-                <Image source={{ uri: work.coverUrl }} style={styles.coverImage} contentFit="cover" />
-              ) : (
-                <Text style={styles.coverTitle} numberOfLines={5}>
-                  {work?.title}
-                </Text>
-              )}
-            </View>
-            <View style={styles.bookMeta}>
-              <Text style={styles.title} numberOfLines={3}>
-                {work?.title}
-              </Text>
-              {work?.author ? (
-                <GalpiText variant="metaLg" color={c.textSecondary}>
-                  {work.author}
-                </GalpiText>
-              ) : null}
-              <View style={styles.badgeRow}>
-                <Badge>{`문장 ${quotes.length}${q.hasNextPage ? '+' : ''}개`}</Badge>
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListHeaderComponent={
+            <>
+              <View style={styles.bookInfo}>
+                <View style={styles.cover}>
+                  {work?.coverUrl ? (
+                    <Image source={{ uri: work.coverUrl }} style={styles.coverImage} contentFit="cover" />
+                  ) : (
+                    <Text style={styles.coverTitle} numberOfLines={5}>
+                      {work?.title}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.bookMeta}>
+                  <Text style={styles.title} numberOfLines={3}>
+                    {work?.title}
+                  </Text>
+                  {work?.author ? (
+                    <GalpiText variant="metaLg" color={c.textSecondary}>
+                      {work.author}
+                    </GalpiText>
+                  ) : null}
+                  <View style={styles.badgeRow}>
+                    <Badge>{`문장 ${quotes.length}${q.hasNextPage ? '+' : ''}개`}</Badge>
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
 
-          <Text style={styles.sectionTitle}>이 책의 문장</Text>
-
-          {quotes.length === 0 ? (
+              <Text style={styles.sectionTitle}>이 책의 문장</Text>
+            </>
+          }
+          ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <EmptyState
                 icon={Quote}
@@ -130,26 +133,15 @@ export default function BookDetailScreen() {
                 action={<Button label="문장 추가" onPress={addQuote} iconLeft={<Plus size={18} color={c.textOnPrimary} />} />}
               />
             </View>
-          ) : (
-            <View style={styles.quoteList}>
-              {quotes.map((quote) => (
-                <QuoteCard
-                  key={quote.quoteId}
-                  characterName={quote.characterName}
-                  content={quote.content}
-                  hasSchedule={quote.hasSchedule}
-                  hasMemo={!!quote.memo}
-                  onPress={() => router.push(`/quote/${quote.quoteId}` as Href)}
-                />
-              ))}
-              {q.isFetchingNextPage ? (
-                <View style={styles.footerLoading}>
-                  <ActivityIndicator color={c.primary} />
-                </View>
-              ) : null}
-            </View>
-          )}
-        </ScrollView>
+          }
+          ListFooterComponent={
+            q.isFetchingNextPage ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator color={c.primary} />
+              </View>
+            ) : null
+          }
+        />
       )}
 
       {!q.isPending && !q.isError && quotes.length > 0 ? (
@@ -194,6 +186,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
   },
   emptyWrap: { paddingTop: Spacing.four },
-  quoteList: { gap: Spacing.three },
+  separator: { height: Spacing.three },
   footerLoading: { paddingVertical: Spacing.four, alignItems: 'center' },
 });

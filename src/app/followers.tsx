@@ -2,14 +2,7 @@ import type { Href } from 'expo-router';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Users } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PersonRow } from '@/components/content/person-row';
@@ -57,10 +50,8 @@ export default function FollowersScreen() {
     { id: 'following', label: label('팔로잉', me.data?.followingCount) },
   ];
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
-    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
-    if (nearBottom && active.hasNextPage && !active.isFetchingNextPage) active.fetchNextPage();
+  const loadMore = () => {
+    if (active.hasNextPage && !active.isFetchingNextPage) active.fetchNextPage();
   };
 
   return (
@@ -88,12 +79,13 @@ export default function FollowersScreen() {
           />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={200}>
-          {items.map((p) => {
+        <FlatList
+          data={items}
+          keyExtractor={(p) => String(p.userId)}
+          renderItem={({ item: p }) => {
             const following = followOverride[p.userId] ?? p.isFollowing;
             return (
               <PersonRow
-                key={p.userId}
                 nickname={p.nickname}
                 bio={p.bio}
                 avatarUrl={p.profileImageUrl}
@@ -102,13 +94,19 @@ export default function FollowersScreen() {
                 onPress={() => router.push(`/user/${p.userId}` as Href)}
               />
             );
-          })}
-          {active.isFetchingNextPage ? (
-            <View style={styles.footerLoading}>
-              <ActivityIndicator color={c.primary} />
-            </View>
-          ) : null}
-        </ScrollView>
+          }}
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            active.isFetchingNextPage ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator color={c.primary} />
+              </View>
+            ) : null
+          }
+        />
       )}
     </SafeAreaView>
   );

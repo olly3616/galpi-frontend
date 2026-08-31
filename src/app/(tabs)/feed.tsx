@@ -1,7 +1,7 @@
 import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { UserPlus, Users } from 'lucide-react-native';
-import { ActivityIndicator, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FeedCard } from '@/components/content/feed-card';
@@ -19,10 +19,8 @@ export default function FeedScreen() {
 
   const items = feed.data?.pages.flatMap((p) => p.items) ?? [];
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
-    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
-    if (nearBottom && feed.hasNextPage && !feed.isFetchingNextPage) feed.fetchNextPage();
+  const loadMore = () => {
+    if (feed.hasNextPage && !feed.isFetchingNextPage) feed.fetchNextPage();
   };
 
   return (
@@ -60,14 +58,11 @@ export default function FeedScreen() {
           />
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.body}
-          showsVerticalScrollIndicator={false}
-          onScroll={onScroll}
-          scrollEventThrottle={200}>
-          {items.map((item) => (
+        <FlatList
+          data={items}
+          keyExtractor={(item) => String(item.quoteId)}
+          renderItem={({ item }) => (
             <FeedCard
-              key={item.quoteId}
               nickname={item.author.nickname}
               characterName={item.characterName}
               content={item.content}
@@ -78,13 +73,19 @@ export default function FeedScreen() {
               onToggleLike={() => toggleLike.mutate({ quoteId: item.quoteId, liked: item.isLiked })}
               onPressAuthor={() => router.push(`/user/${item.author.userId}` as Href)}
             />
-          ))}
-          {feed.isFetchingNextPage ? (
-            <View style={styles.footerLoading}>
-              <ActivityIndicator color={c.primary} />
-            </View>
-          ) : null}
-        </ScrollView>
+          )}
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            feed.isFetchingNextPage ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator color={c.primary} />
+              </View>
+            ) : null
+          }
+        />
       )}
     </SafeAreaView>
   );

@@ -1,16 +1,7 @@
 import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { BellRing } from 'lucide-react-native';
-import {
-  ActivityIndicator,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EmptyState, ErrorState, GalpiText, ScreenHeader, Switch } from '@/components/design-system';
@@ -34,10 +25,8 @@ export default function SchedulesScreen() {
 
   const items = q.data?.pages.flatMap((p) => p.items) ?? [];
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
-    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
-    if (nearBottom && q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage();
+  const loadMore = () => {
+    if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage();
   };
 
   return (
@@ -65,14 +54,11 @@ export default function SchedulesScreen() {
           />
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.body}
-          showsVerticalScrollIndicator={false}
-          onScroll={onScroll}
-          scrollEventThrottle={200}>
-          {items.map((s) => (
+        <FlatList
+          data={items}
+          keyExtractor={(s) => String(s.scheduleId)}
+          renderItem={({ item: s }) => (
             <Pressable
-              key={s.scheduleId}
               onPress={() => router.push(`/quote/${s.quote.quoteId}` as Href)}
               style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
               accessibilityRole="button">
@@ -105,13 +91,19 @@ export default function SchedulesScreen() {
                 }
               />
             </Pressable>
-          ))}
-          {q.isFetchingNextPage ? (
-            <View style={styles.footerLoading}>
-              <ActivityIndicator color={c.primary} />
-            </View>
-          ) : null}
-        </ScrollView>
+          )}
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            q.isFetchingNextPage ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator color={c.primary} />
+              </View>
+            ) : null
+          }
+        />
       )}
     </SafeAreaView>
   );
