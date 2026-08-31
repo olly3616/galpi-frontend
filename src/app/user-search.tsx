@@ -2,15 +2,7 @@ import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { Search, UserX } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Keyboard,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Keyboard, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PersonRow } from '@/components/content/person-row';
@@ -61,10 +53,8 @@ export default function UserSearchScreen() {
     );
   };
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
-    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
-    if (nearBottom && search.hasNextPage && !search.isFetchingNextPage) search.fetchNextPage();
+  const loadMore = () => {
+    if (search.hasNextPage && !search.isFetchingNextPage) search.fetchNextPage();
   };
 
   return (
@@ -102,17 +92,13 @@ export default function UserSearchScreen() {
           <EmptyState icon={UserX} title="검색 결과가 없어요" description="다른 닉네임으로 찾아보세요" />
         </View>
       ) : showResults ? (
-        <ScrollView
-          contentContainerStyle={styles.body}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          onScroll={onScroll}
-          scrollEventThrottle={200}>
-          {results.map((u) => {
+        <FlatList
+          data={results}
+          keyExtractor={(u) => String(u.userId)}
+          renderItem={({ item: u }) => {
             const following = followOverride[u.userId] ?? u.isFollowing;
             return (
               <PersonRow
-                key={u.userId}
                 nickname={u.nickname}
                 bio={u.bio}
                 avatarUrl={u.profileImageUrl}
@@ -121,13 +107,20 @@ export default function UserSearchScreen() {
                 onPress={() => router.push(`/user/${u.userId}` as Href)}
               />
             );
-          })}
-          {search.isFetchingNextPage ? (
-            <View style={styles.footerLoading}>
-              <ActivityIndicator color={c.primary} />
-            </View>
-          ) : null}
-        </ScrollView>
+          }}
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            search.isFetchingNextPage ? (
+              <View style={styles.footerLoading}>
+                <ActivityIndicator color={c.primary} />
+              </View>
+            ) : null
+          }
+        />
       ) : null}
     </SafeAreaView>
   );
