@@ -90,12 +90,17 @@ export default function QuoteDetailScreen() {
       return;
     }
     setAlarmError('');
-    createSchedule.mutate({
-      sendTime: `${hour}:${minute}`,
-      repeatType: REPEAT_TO_API[repeat],
-      daysOfWeek: repeat === 'weekly' ? daysToApi(days) : undefined,
-      sendDate: repeat === 'once' ? toDateStr(onceDate) : undefined,
-    });
+    createSchedule.mutate(
+      {
+        sendTime: `${hour}:${minute}`,
+        repeatType: REPEAT_TO_API[repeat],
+        daysOfWeek: repeat === 'weekly' ? daysToApi(days) : undefined,
+        sendDate: repeat === 'once' ? toDateStr(onceDate) : undefined,
+      },
+      {
+        onError: () => setAlarmError('알림을 저장하지 못했어요. 다시 시도해주세요.'),
+      },
+    );
   };
 
   const toggleActive = (s: ScheduleSummary) =>

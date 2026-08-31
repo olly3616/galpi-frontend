@@ -24,8 +24,10 @@ export function usePushNotifications() {
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as { quoteId?: number | string } | undefined;
-      const quoteId = data?.quoteId;
-      if (quoteId != null) router.push(`/quote/${quoteId}` as Href);
+      // The payload is attacker-influenceable; only navigate for a clean positive integer id so a
+      // crafted value like "1/../settings" can't redirect the tap to an arbitrary in-app route.
+      const quoteId = Number(data?.quoteId);
+      if (Number.isInteger(quoteId) && quoteId > 0) router.push(`/quote/${quoteId}` as Href);
     });
     return () => sub.remove();
   }, []);

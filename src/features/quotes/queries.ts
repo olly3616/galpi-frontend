@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { bookshelfKeys } from '@/features/bookshelf/queries';
+import { schedulesKeys } from '@/features/schedules/queries';
 import { nextPageParam } from '@/lib/api/pagination';
 
 import {
@@ -67,18 +68,24 @@ export function useUpdateQuote(quoteId: number) {
     onSuccess: (data) => {
       qc.setQueryData(quoteKeys.detail(quoteId), data);
       qc.invalidateQueries({ queryKey: quoteKeys.work(data.work.workId) });
+      // 내 알림 목록 embeds the quote's content/work, so edits must refresh it too.
+      qc.invalidateQueries({ queryKey: schedulesKeys.me });
     },
   });
 }
 
-/** Delete a quote; refresh the book's list and the shelf. */
+/** Delete a quote; refresh the book's list and the shelf, and drop its now-dead caches. */
 export function useDeleteQuote() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ quoteId }: { quoteId: number; workId: number }) => deleteQuote(quoteId),
-    onSuccess: (_res, { workId }) => {
+    onSuccess: (_res, { quoteId, workId }) => {
       qc.invalidateQueries({ queryKey: quoteKeys.work(workId) });
       qc.invalidateQueries({ queryKey: bookshelfKeys.me });
+      // Refresh 내 알림 목록 (a deleted quote must not leave a phantom alarm row) and drop the
+      // stale detail cache so nothing navigates to a dead /quote/{id}.
+      qc.invalidateQueries({ queryKey: schedulesKeys.me });
+      qc.removeQueries({ queryKey: quoteKeys.detail(quoteId) });
     },
   });
 }

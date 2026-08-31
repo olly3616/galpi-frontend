@@ -24,8 +24,9 @@ export async function uploadImage(uri: string): Promise<UploadedImage> {
   form.append('file', { uri, name, type } as unknown as Blob);
 
   const res = await api.post<UploadedImage>('/api/images', form, {
-    // Override the instance's JSON default so the multipart boundary is used for this request.
-    headers: { 'Content-Type': 'multipart/form-data' },
+    // Clear the instance's JSON default and let the platform set `multipart/form-data; boundary=…`.
+    // Setting the header by hand omits the boundary, which many servers then can't parse.
+    headers: { 'Content-Type': undefined } as unknown as Record<string, string>,
   });
   return res.data;
 }

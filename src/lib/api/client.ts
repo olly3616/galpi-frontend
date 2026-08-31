@@ -54,9 +54,14 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && original && !original._retry) {
       original._retry = true;
-      refreshPromise = refreshPromise ?? refreshAccessToken();
+      // Only the creator clears the shared promise (via finally), so a 401 that arrives while a
+      // refresh is in flight can't null out a newer refresh and trigger a duplicate call.
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+      }
       const newToken = await refreshPromise;
-      refreshPromise = null;
       if (newToken) {
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
