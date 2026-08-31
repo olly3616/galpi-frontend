@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { BookOpen, ImagePlus, Search, X } from 'lucide-react-native';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -64,6 +64,11 @@ export default function AddBookScreen() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setDebounced(text.trim()), 350);
   };
+
+  // Cancel a pending debounce if the screen unmounts before it fires.
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
 
   const onAddSearch = (b: BookSearchItem) => {
     const key = itemKey(b);

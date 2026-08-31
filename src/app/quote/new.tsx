@@ -41,6 +41,7 @@ export default function ComposeQuoteScreen() {
   const [content, setContent] = useState('');
   const [memo, setMemo] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('PRIVATE');
+  const [saveError, setSaveError] = useState('');
 
   // Prefill once the quote to edit has loaded (React's "adjust state during render" pattern).
   const [prefilledId, setPrefilledId] = useState<number | null>(null);
@@ -56,6 +57,8 @@ export default function ComposeQuoteScreen() {
 
   const save = () => {
     if (!canSave) return;
+    setSaveError('');
+    const onError = () => setSaveError('저장하지 못했어요. 네트워크를 확인하고 다시 시도해주세요.');
     if (isEdit) {
       updateQuote.mutate(
         {
@@ -64,7 +67,7 @@ export default function ComposeQuoteScreen() {
           memo: memo.trim() || undefined,
           visibility,
         },
-        { onSuccess: () => router.back() },
+        { onSuccess: () => router.back(), onError },
       );
     } else {
       createQuote.mutate(
@@ -75,7 +78,7 @@ export default function ComposeQuoteScreen() {
           memo: memo.trim() || undefined,
           visibility,
         },
-        { onSuccess: () => router.back() },
+        { onSuccess: () => router.back(), onError },
       );
     }
   };
@@ -112,6 +115,11 @@ export default function ComposeQuoteScreen() {
             contentContainerStyle={styles.scroll}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
+            {saveError ? (
+              <GalpiText variant="metaLg" color={c.error}>
+                {saveError}
+              </GalpiText>
+            ) : null}
             {bookInfo ? (
               <View style={styles.bookRow}>
                 <View style={styles.thumb}>

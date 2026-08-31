@@ -1,7 +1,7 @@
 import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { Search, UserX } from 'lucide-react-native';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -44,6 +44,11 @@ export default function UserSearchScreen() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setDebounced(text.trim()), 350);
   };
+
+  // Cancel a pending debounce if the screen unmounts before it fires.
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
 
   const onToggleFollow = (userId: number, following: boolean) => {
     setFollowOverride((m) => ({ ...m, [userId]: !following }));
