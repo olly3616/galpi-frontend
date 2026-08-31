@@ -7,6 +7,7 @@ import { nextPageParam } from '@/lib/api/pagination';
 import {
   createQuote,
   deleteQuote,
+  getMyQuotes,
   getQuote,
   getWork,
   getWorkQuotes,
@@ -18,7 +19,18 @@ export const quoteKeys = {
   work: (workId: number) => ['works', workId, 'quotes'] as const,
   workInfo: (workId: number) => ['works', workId] as const,
   detail: (quoteId: number) => ['quotes', quoteId] as const,
+  mine: ['quotes', 'me'] as const,
 };
+
+/** 내 문장 전체 목록 (작품 무관), paginated — 최신 저장순. */
+export function useMyQuotes() {
+  return useInfiniteQuery({
+    queryKey: quoteKeys.mine,
+    queryFn: ({ pageParam }) => getMyQuotes(pageParam),
+    initialPageParam: 0,
+    getNextPageParam: nextPageParam,
+  });
+}
 
 /** A work's basic info (used by the compose screen's book row). */
 export function useWork(workId: number) {
@@ -56,6 +68,7 @@ export function useCreateQuote(workId: number) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: quoteKeys.work(workId) });
       qc.invalidateQueries({ queryKey: bookshelfKeys.me });
+      qc.invalidateQueries({ queryKey: quoteKeys.mine });
     },
   });
 }
@@ -70,6 +83,7 @@ export function useUpdateQuote(quoteId: number) {
       qc.invalidateQueries({ queryKey: quoteKeys.work(data.work.workId) });
       // 내 알림 목록 embeds the quote's content/work, so edits must refresh it too.
       qc.invalidateQueries({ queryKey: schedulesKeys.me });
+      qc.invalidateQueries({ queryKey: quoteKeys.mine });
     },
   });
 }
@@ -85,6 +99,7 @@ export function useDeleteQuote() {
       // Refresh 내 알림 목록 (a deleted quote must not leave a phantom alarm row) and drop the
       // stale detail cache so nothing navigates to a dead /quote/{id}.
       qc.invalidateQueries({ queryKey: schedulesKeys.me });
+      qc.invalidateQueries({ queryKey: quoteKeys.mine });
       qc.removeQueries({ queryKey: quoteKeys.detail(quoteId) });
     },
   });

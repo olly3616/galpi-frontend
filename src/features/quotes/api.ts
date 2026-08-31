@@ -39,6 +39,9 @@ export type QuoteDetail = {
 
 export type WorkQuotesResponse = { work: WorkSummary; quotes: PageResponse<QuoteListItem> };
 
+/** A quote in 내 문장 전체 목록 — same as a list item but carries its owning work. */
+export type MyQuoteItem = QuoteListItem & { work: WorkSummary };
+
 export type CreateQuoteInput = {
   workId: number;
   content: string;
@@ -61,6 +64,11 @@ export async function getWork(workId: number): Promise<Work> {
 
 export async function getWorkQuotes(workId: number, page = 0, size = 20): Promise<WorkQuotesResponse> {
   const res = await api.get<WorkQuotesResponse>(`/api/works/${workId}/quotes`, { params: { page, size } });
+  return res.data;
+}
+
+export async function getMyQuotes(page = 0, size = 20): Promise<PageResponse<MyQuoteItem>> {
+  const res = await api.get<PageResponse<MyQuoteItem>>('/api/quotes/me', { params: { page, size } });
   return res.data;
 }
 
